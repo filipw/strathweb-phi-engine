@@ -398,3 +398,7 @@ FodyWeavers.xsd
 *.sln.iml
 strathweb-phi-engine/bindings
 strathweb-phi-engine/target
+.DS_Store
+phi.engine.sample/phi.engine.sample/strathweb_phi_engine_framework.xcframework
+phi.engine.sample/phi.engine.sample.xcodeproj/project.xcworkspace/xcuserdata
+phi.engine.sample/phi.engine.sample.xcodeproj/xcuserdata
