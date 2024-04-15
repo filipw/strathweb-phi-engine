@@ -9,7 +9,7 @@ import Foundation
 
 class AiViewModel: ObservableObject {
     var engine: PhiEngine?
-    let inferenceOptions: InferenceOptions = InferenceOptions(tokenCount: 100, temperature: 0.0, topP: 1.0, repeatPenalty: 1.0, repeatLastN: 64, seed: 299792458)
+    let inferenceOptions: InferenceOptions = InferenceOptions(tokenCount: 10, temperature: 0.0, topP: 1.0, repeatPenalty: 1.0, repeatLastN: 64, seed: 299792458)
     @Published var isLoading: Bool = false
     @Published var isLoadingEngine: Bool = false
     @Published var messages: [ChatMessage] = []
@@ -20,7 +20,7 @@ class AiViewModel: ObservableObject {
         DispatchQueue.main.async {
             self.isLoadingEngine = true
         }
-        self.engine = PhiEngine(systemInstruction: nil)
+        self.engine = PhiEngine(engineOptions: EngineOptions(systemInstruction: nil, modelName: nil, modelRevision: nil))
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true

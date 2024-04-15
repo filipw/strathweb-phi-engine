@@ -10,8 +10,14 @@ dictionary InferenceOptions {
 	u64 seed;
 };
 
+dictionary EngineOptions {
+    string? system_instruction;
+    string? model_name;
+    string? model_revision;
+};
+
 interface PhiEngine {
-    constructor(string? system_instruction);
+    constructor(EngineOptions engine_options);
     string run_inference(string prompt_text, [ByRef]InferenceOptions inference_options);
     void clear_history();
 };

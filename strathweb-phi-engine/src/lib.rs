@@ -30,6 +30,12 @@ pub struct InferenceOptions {
     pub seed: u64,
 }
 
+#[derive(Debug, Clone)]
+pub struct EngineOptions {
+    pub model_name: Option<String>,
+    pub model_revision: Option<String>,
+    pub system_instruction: Option<String>
+}
 
 impl Default for InferenceOptions {
     fn default() -> Self {
@@ -45,10 +51,16 @@ impl Default for InferenceOptions {
 }
 
 impl PhiEngine {
-    pub fn new(system_insruction: Option<String>) -> Self {
+    pub fn new(engine_options: EngineOptions) -> Self {
         let start = std::time::Instant::now();
+        
+        // defaults
+        let model_name = engine_options.model_name.unwrap_or("rhysjones/phi-2-orange-v2".to_string());
+        let model_revision = engine_options.model_revision.unwrap_or("main".to_string());
+        let system_instruction = engine_options.system_instruction.unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
+
         let repo = Api::new().unwrap().repo(Repo::with_revision(
-            "rhysjones/phi-2-orange-v2".to_string(), RepoType::Model, "main".to_string(),
+            model_name, RepoType::Model, model_revision,
         ));
         let tokenizer_filename = repo.get("tokenizer.json").unwrap();
     
@@ -61,9 +73,8 @@ impl PhiEngine {
         let config: PhiConfig = serde_json::from_str(&config).unwrap();
         let model = Phi::new(&config, vb).unwrap();
 
-        println!("loaded the model in {:?}", start.elapsed());
+        println!("Loaded the model in {:?}", start.elapsed());
 
-        let system_instruction = system_insruction.unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
 
         Self {
             model: model,
