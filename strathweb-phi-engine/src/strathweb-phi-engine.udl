@@ -1,0 +1,17 @@
+namespace strathweb_phi_engine {
+};
+
+dictionary InferenceOptions {
+	u16 token_count;
+	f64? temperature;
+	f64? top_p;
+    f32 repeat_penalty;
+	u16 repeat_last_n;
+	u64 seed;
+};
+
+interface PhiEngine {
+    constructor(string? system_instruction);
+    string run_inference(string prompt_text, [ByRef]InferenceOptions inference_options);
+    void clear_history();
+};
