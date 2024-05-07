@@ -10,9 +10,9 @@ crate-type = ["lib", "cdylib", "staticlib"]
 thiserror = "1.0"
 uniffi = { version = "0.27.1", features=["build"] }
 anyhow = "1.0.81"
-candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.5.0", features = ["metal"] }
-candle-nn = { git = "https://github.com/huggingface/candle.git", version = "0.5.0", features = ["metal"] }
-candle-transformers = { git = "https://github.com/huggingface/candle.git", version = "0.5.0", features = ["metal"] }
+candle-core = { path = "../../candle/candle-core", features = ["metal"] }
+candle-nn = { path = "../../candle/candle-nn", features = ["metal"] }
+candle-transformers = { path = "../../candle/candle-transformers", features = ["metal"] }
 hf-hub = { version = "0.3.2", features = ["tokio"] }
 serde_json = "1.0.115"
 tokenizers = "0.15.2"
