@@ -1,19 +1,11 @@
 uniffi::include_scaffolding!("strathweb-phi-engine");
 
 use std::collections::VecDeque;
-use std::io::{stdin, stdout, Write};
-use candle_core::op::Op;
+use std::io::Write;
 use candle_core::quantized::gguf_file;
-use candle_core::{DType, Device, Tensor};
-use candle_nn::VarBuilder;
-use candle_transformers::generation::{LogitsProcessor, Sampling};
-use candle_transformers::models::quantized_mixformer::MixFormerSequentialForCausalLM as QMixFormer;
-use candle_transformers::models::phi::{Config as PhiConfig, Model as Phi};
+use candle_core::{Device, Tensor};
+use candle_transformers::generation::LogitsProcessor;
 use candle_transformers::models::quantized_llama::ModelWeights as QPhi3;
-use candle_transformers::models::quantized_phi::ModelWeights;
-use hf_hub::RepoType;
-use hf_hub::{api::sync::Api, Repo};
-use serde_json::de;
 use tokenizers::Tokenizer;
 use anyhow::{Error as E, Result};
 use std::sync::Mutex;
@@ -42,7 +34,6 @@ pub struct EngineOptions {
     pub model_repo: Option<String>,
     pub tokenizer_repo: Option<String>,
     pub model_file_name: Option<String>,
-    pub model_revision: Option<String>,
     pub system_instruction: Option<String>
 }
 
@@ -70,7 +61,6 @@ impl PhiEngine {
         let tokenizer_repo = engine_options.tokenizer_repo.unwrap_or("microsoft/Phi-3-mini-4k-instruct".to_string());
         let model_repo = engine_options.model_repo.unwrap_or("microsoft/Phi-3-mini-4k-instruct-gguf".to_string());
         let model_file_name = engine_options.model_file_name.unwrap_or("Phi-3-mini-4k-instruct-q4.gguf".to_string());
-        let model_revision = engine_options.model_revision.unwrap_or("main".to_string());
         let system_instruction = engine_options.system_instruction.unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
 
         let api = hf_hub::api::sync::Api::new().unwrap();
@@ -83,13 +73,13 @@ impl PhiEngine {
     
         let mut file = std::fs::File::open(&model_path).unwrap();
             let model = gguf_file::Content::read(&mut file).unwrap();
-            let mut total_size_in_bytes = 0;
+            let mut _total_size_in_bytes = 0;
             for (_, tensor) in model.tensor_infos.iter() {
                 let elem_count = tensor.shape.elem_count();
-                total_size_in_bytes +=
+                _total_size_in_bytes +=
                     elem_count * tensor.ggml_dtype.type_size() / tensor.ggml_dtype.block_size();
             }
-        let mut model = QPhi3::from_gguf(model, &mut file, &device).unwrap();
+        let model = QPhi3::from_gguf(model, &mut file, &device).unwrap();
         let tokenizer = Tokenizer::from_file(tokenizer_path).unwrap();
 
         println!("Loaded the model in {:?}", start.elapsed());
@@ -171,16 +161,10 @@ impl TextGeneration {
         let mut tos = TokenOutputStream::new(self.tokenizer.clone());
         let tokens = tos
             .tokenizer()
-            .encode(prompt, true).unwrap();
+            .encode(prompt, true).map_err(E::msg)?;
         let tokens = tokens.get_ids();
 
         let mut all_tokens = vec![];
-        // let mut logits_processor = LogitsProcessor::new(
-        //     self.inference_options.seed,
-        //     self.inference_options.temperature,
-        //     self.inference_options.top_p,
-        // );
-
         let start_prompt_processing = std::time::Instant::now();
         let mut next_token = {
             let mut next_token = 0;
@@ -200,18 +184,17 @@ impl TextGeneration {
             std::io::stdout().flush()?;
         }
 
-        let eos_token = *self
-        .tokenizer
-        .get_vocab(true)
-        .get("<|end|>")
-        .unwrap();
+        let binding = self.tokenizer
+            .get_vocab(true);
+        let eos_token = binding
+            .get("<|end|>").unwrap();
 
         let start_post_prompt = std::time::Instant::now();
         let mut sampled = 0;
         let to_sample = sample_len.saturating_sub(1) as usize;
         for index in 0..to_sample {
             let input = Tensor::new(&[next_token], &self.device)?.unsqueeze(0)?;
-            let logits = self.model.forward(&input, tokens.len() + index).unwrap();
+            let logits = self.model.forward(&input, tokens.len() + index)?;
             let logits = logits.squeeze(0)?;
             let logits = if self.inference_options.repeat_penalty == 1.0 {
                 logits
@@ -226,7 +209,7 @@ impl TextGeneration {
 
             next_token = self.logits_processor.sample(&logits)?;
             all_tokens.push(next_token);
-            if next_token == eos_token {
+            if &next_token == eos_token {
                 break;
             }
 

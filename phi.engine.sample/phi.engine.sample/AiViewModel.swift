@@ -22,7 +22,7 @@ class AiViewModel: ObservableObject {
             self.isLoadingEngine = true
         }
 
-        self.engine = PhiEngine(engineOptions: EngineOptions(systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil, modelRevision: nil))
+        self.engine = PhiEngine(engineOptions: EngineOptions(systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil))
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true

@@ -15,7 +15,6 @@ dictionary EngineOptions {
     string? tokenizer_repo;
     string? model_repo;
     string? model_file_name;
-    string? model_revision;
 };
 
 interface PhiEngine {
