@@ -175,11 +175,11 @@ impl TextGeneration {
         let tokens = tokens.get_ids();
 
         let mut all_tokens = vec![];
-        let mut logits_processor = LogitsProcessor::new(
-            self.inference_options.seed,
-            self.inference_options.temperature,
-            self.inference_options.top_p,
-        );
+        // let mut logits_processor = LogitsProcessor::new(
+        //     self.inference_options.seed,
+        //     self.inference_options.temperature,
+        //     self.inference_options.top_p,
+        // );
 
         let start_prompt_processing = std::time::Instant::now();
         let mut next_token = {
@@ -188,7 +188,7 @@ impl TextGeneration {
                 let input = Tensor::new(&[*token], &self.device)?.unsqueeze(0)?;
                 let logits = self.model.forward(&input, pos).unwrap();
                 let logits = logits.squeeze(0)?;
-                next_token = logits_processor.sample(&logits)?;
+                next_token = self.logits_processor.sample(&logits)?;
             }
             next_token
         };
@@ -224,7 +224,7 @@ impl TextGeneration {
                 )?
             };
 
-            next_token = logits_processor.sample(&logits)?;
+            next_token = self.logits_processor.sample(&logits)?;
             all_tokens.push(next_token);
             if next_token == eos_token {
                 break;
