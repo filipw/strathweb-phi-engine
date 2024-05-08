@@ -59,7 +59,8 @@ pub trait PhiEventHandler: Send + Sync {
 impl PhiEngine {
     pub fn new(engine_options: EngineOptions, event_handler: Arc<dyn PhiEventHandler>) -> Result<Self, PhiError> {
         let start = std::time::Instant::now();
-        // candle does not support Metal on iOS
+        // candle does not support Metal on iOS yet
+        // this also requires building with features = ["metal"]
         //let device = Device::new_metal(0).unwrap();
         let device = Device::Cpu;
 
