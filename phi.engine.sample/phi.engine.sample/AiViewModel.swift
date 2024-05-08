@@ -22,7 +22,7 @@ class AiViewModel: ObservableObject {
             self.isLoadingEngine = true
         }
 
-        self.engine = PhiEngine(engineOptions: EngineOptions(systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil))
+        self.engine = try! PhiEngine(engineOptions: EngineOptions(systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil))
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true
@@ -38,7 +38,7 @@ class AiViewModel: ObservableObject {
                 self.messages.append(ChatMessage(text: question, isUser: true))
             }
             
-            let messageText = engine.runInference(promptText: question, inferenceOptions: self.inferenceOptions)
+            let messageText = try! engine.runInference(promptText: question, inferenceOptions: self.inferenceOptions)
     
             DispatchQueue.main.async {
                 self.messages.append(ChatMessage(text: messageText, isUser: false))

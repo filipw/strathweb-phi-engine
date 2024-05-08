@@ -9,7 +9,7 @@ use candle_transformers::models::quantized_llama::ModelWeights as QPhi3;
 use tokenizers::Tokenizer;
 use anyhow::{Error as E, Result};
 use std::sync::Mutex;
-
+use thiserror::Error;
 
 struct PhiEngine {
     pub model: QPhi3,
@@ -51,10 +51,10 @@ impl Default for InferenceOptions {
 }
 
 impl PhiEngine {
-    pub fn new(engine_options: EngineOptions) -> Self {
+    pub fn new(engine_options: EngineOptions) -> Result<Self, PhiError> {
         let start = std::time::Instant::now();
-        //let device = Device::new_metal(0).unwrap();
         // candle does not support Metal on iOS
+        //let device = Device::new_metal(0).unwrap();
         let device = Device::Cpu;
 
         // defaults
@@ -63,53 +63,56 @@ impl PhiEngine {
         let model_file_name = engine_options.model_file_name.unwrap_or("Phi-3-mini-4k-instruct-q4.gguf".to_string());
         let system_instruction = engine_options.system_instruction.unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
 
-        let api = hf_hub::api::sync::Api::new().unwrap();
+        let api = hf_hub::api::sync::Api::new().map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
         let api = api.model(model_repo.to_string());
-        let model_path = api.get(model_file_name.as_str()).unwrap();
+        let model_path = api.get(model_file_name.as_str()).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
 
-        let api = hf_hub::api::sync::Api::new().unwrap();
+        let api = hf_hub::api::sync::Api::new().map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
         let api = api.model(tokenizer_repo.to_string());
-        let tokenizer_path = api.get("tokenizer.json").unwrap();
+        let tokenizer_path = api.get("tokenizer.json").map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
     
-        let mut file = std::fs::File::open(&model_path).unwrap();
-            let model = gguf_file::Content::read(&mut file).unwrap();
-            let mut _total_size_in_bytes = 0;
-            for (_, tensor) in model.tensor_infos.iter() {
-                let elem_count = tensor.shape.elem_count();
-                _total_size_in_bytes +=
-                    elem_count * tensor.ggml_dtype.type_size() / tensor.ggml_dtype.block_size();
-            }
-        let model = QPhi3::from_gguf(model, &mut file, &device).unwrap();
-        let tokenizer = Tokenizer::from_file(tokenizer_path).unwrap();
+        let mut file = std::fs::File::open(&model_path).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
+        let model = gguf_file::Content::read(&mut file).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
+        let mut _total_size_in_bytes = 0;
+        for (_, tensor) in model.tensor_infos.iter() {
+            let elem_count = tensor.shape.elem_count();
+            _total_size_in_bytes +=
+                elem_count * tensor.ggml_dtype.type_size() / tensor.ggml_dtype.block_size();
+        }
+        let model = QPhi3::from_gguf(model, &mut file, &device).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
+        let tokenizer = Tokenizer::from_file(tokenizer_path).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
 
         println!("Loaded the model in {:?}", start.elapsed());
 
-        Self {
+        Ok(Self {
             model: model,
             tokenizer: tokenizer,
             device: device, 
             history: Mutex::new(VecDeque::with_capacity(6)),
             system_instruction: system_instruction
-        }
+        })
     }
 
-    pub fn run_inference(&self, prompt_text: String, inference_options: &InferenceOptions) -> String {
-        let mut history = self.history.lock().unwrap();
-        if history.len() == 6 {
+    pub fn run_inference(&self, prompt_text: String, inference_options: &InferenceOptions) -> Result<String, PhiError> {
+        let mut history = self.history.lock().map_err(|e| PhiError::HistoryError { error_text: e.to_string() })?;
+
+        // todo: this is a hack to keep the history length short so that we don't overflow the token limit
+        // under normal circumstances we should count the tokens
+        if history.len() == 10 {
             history.pop_front();
             history.pop_front();
         }
 
         history.push_back(prompt_text.clone());
 
-        // todo: Phi-3 has not system prompt
         let history_prompt = history
             .iter()
             .enumerate()
             .map(|(i, text)| if i % 2 == 0 { format!("\n<|user|>\n{}<|end|>", text) } else { format!("\n<|assistant|>\n{}<|end|>", text) })
             .collect::<String>();
 
-        let prompt_with_history = format!("<|system|>\n{}<|end|>\n{}\n<|assistant|>\n", self.system_instruction, history_prompt);
+        // Phi-3 has no system prompt so we inject it as a user prompt
+        let prompt_with_history = format!("<|user|>Your general instructions are:\n{}<|end|>\n{}\n<|assistant|>\n", self.system_instruction, history_prompt);
 
         let mut pipeline = TextGeneration::new(
             &self.model,
@@ -118,14 +121,15 @@ impl PhiEngine {
             &self.device,
         );
 
-        let response = pipeline.run(&prompt_with_history, inference_options.token_count).unwrap();
+        let response = pipeline.run(&prompt_with_history, inference_options.token_count).map_err(|e: E| PhiError::InferenceError { error_text: e.to_string() })?;
         history.push_back(response.clone());
-        response
+        Ok(response)
     }
 
-    pub fn clear_history(&self) {
-        let mut history = self.history.lock().unwrap();
+    pub fn clear_history(&self) -> Result<(), PhiError> {
+        let mut history = self.history.lock().map_err(|e| PhiError::HistoryError { error_text: e.to_string() })?;
         history.clear();
+        Ok(())
     }
 }
 
@@ -138,7 +142,6 @@ struct TextGeneration {
 }
 
 impl TextGeneration {
-    #[allow(clippy::too_many_arguments)]
     fn new(
         model: &QPhi3,
         tokenizer: Tokenizer,
@@ -170,7 +173,7 @@ impl TextGeneration {
             let mut next_token = 0;
             for (pos, token) in tokens.iter().enumerate() {
                 let input = Tensor::new(&[*token], &self.device)?.unsqueeze(0)?;
-                let logits = self.model.forward(&input, pos).unwrap();
+                let logits = self.model.forward(&input, pos)?;
                 let logits = logits.squeeze(0)?;
                 next_token = self.logits_processor.sample(&logits)?;
             }
@@ -187,53 +190,58 @@ impl TextGeneration {
         let binding = self.tokenizer
             .get_vocab(true);
         let eos_token = binding
-            .get("<|end|>").unwrap();
+            .get("<|end|>").ok_or_else(|| anyhow::Error::msg("No end token found"));
 
-        let start_post_prompt = std::time::Instant::now();
-        let mut sampled = 0;
-        let to_sample = sample_len.saturating_sub(1) as usize;
-        for index in 0..to_sample {
-            let input = Tensor::new(&[next_token], &self.device)?.unsqueeze(0)?;
-            let logits = self.model.forward(&input, tokens.len() + index)?;
-            let logits = logits.squeeze(0)?;
-            let logits = if self.inference_options.repeat_penalty == 1.0 {
-                logits
-            } else {
-                let start_at = all_tokens.len().saturating_sub(self.inference_options.repeat_last_n.into());
-                candle_transformers::utils::apply_repeat_penalty(
-                    &logits,
-                    self.inference_options.repeat_penalty,
-                    &all_tokens[start_at..],
-                )?
-            };
-
-            next_token = self.logits_processor.sample(&logits)?;
-            all_tokens.push(next_token);
-            if &next_token == eos_token {
-                break;
-            }
-
-            if let Some(t) = tos.next_token(next_token)? {
-                print!("{t}");
-                std::io::stdout().flush()?;
-            }
-            sampled += 1;
-        }
-
-        let dt = start_post_prompt.elapsed();
-        println!(
-            "\n\n{:4} prompt tokens processed in {:.2} seconds ({:.2} token/s)",
-            tokens.len(),
-            prompt_dt.as_secs_f64(),
-            tokens.len() as f64 / prompt_dt.as_secs_f64(),
-        );
-        println!(
-            "{sampled} tokens generated in {:.2} seconds ({:.2} token/s)",
-            dt.as_secs_f64(),
-            sampled as f64 / dt.as_secs_f64(),
-        );
-
-        Ok(tos.decode_all().map_err(E::msg)?)
+        match eos_token {
+            Ok(eos_token) => {
+                let start_post_prompt = std::time::Instant::now();
+                let mut sampled = 0;
+                let to_sample = sample_len.saturating_sub(1) as usize;
+                for index in 0..to_sample {
+                    let input = Tensor::new(&[next_token], &self.device)?.unsqueeze(0)?;
+                    let logits = self.model.forward(&input, tokens.len() + index)?;
+                    let logits = logits.squeeze(0)?;
+                    let logits = if self.inference_options.repeat_penalty == 1.0 {
+                        logits
+                    } else {
+                        let start_at = all_tokens.len().saturating_sub(self.inference_options.repeat_last_n.into());
+                        candle_transformers::utils::apply_repeat_penalty(
+                            &logits,
+                            self.inference_options.repeat_penalty,
+                            &all_tokens[start_at..],
+                        )?
+                    };
+        
+                    next_token = self.logits_processor.sample(&logits)?;
+                    all_tokens.push(next_token);
+                    if &next_token == eos_token {
+                        break;
+                    }
+        
+                    if let Some(t) = tos.next_token(next_token)? {
+                        print!("{t}");
+                        std::io::stdout().flush()?;
+                    }
+                    sampled += 1;
+                }
+        
+                let dt = start_post_prompt.elapsed();
+                println!(
+                    "\n\n{:4} prompt tokens processed in {:.2} seconds ({:.2} token/s)",
+                    tokens.len(),
+                    prompt_dt.as_secs_f64(),
+                    tokens.len() as f64 / prompt_dt.as_secs_f64(),
+                );
+                println!(
+                    "{sampled} tokens generated in {:.2} seconds ({:.2} token/s)",
+                    dt.as_secs_f64(),
+                    sampled as f64 / dt.as_secs_f64(),
+                );
+        
+                Ok(tos.decode_all().map_err(E::msg)?)
+            },
+            Err(e) => return Err(e)
+        } 
     }
 }
 
@@ -275,11 +283,29 @@ impl TokenOutputStream {
         };
         self.tokens.push(token);
         let text = self.decode(&self.tokens[self.prev_index..])?;
-        if text.len() > prev_text.len() && text.chars().last().unwrap().is_ascii() {
-            let text = text.split_at(prev_text.len());
-            self.prev_index = self.current_index;
-            self.current_index = self.tokens.len();
-            Ok(Some(text.1.to_string()))
+        // if text.len() > prev_text.len() && text.chars().last().unwrap().is_ascii() {
+        //     let text = text.split_at(prev_text.len());
+        //     self.prev_index = self.current_index;
+        //     self.current_index = self.tokens.len();
+        //     Ok(Some(text.1.to_string()))
+        // } else {
+        //     Ok(None)
+        // }
+
+        if text.len() > prev_text.len() {
+            match text.chars().last().ok_or_else(|| anyhow::Error::msg("No last character")) {
+                Ok(last_char) => {
+                    if last_char.is_ascii() {
+                        let text = text.split_at(prev_text.len());
+                        self.prev_index = self.current_index;
+                        self.current_index = self.tokens.len();
+                        Ok(Some(text.1.to_string()))
+                    } else {
+                        Ok(None)
+                    }
+                },
+                Err(e) => Err(e),
+            }
         } else {
             Ok(None)
         }
@@ -318,4 +344,16 @@ impl TokenOutputStream {
         self.prev_index = 0;
         self.current_index = 0;
     }
+}
+
+#[derive(Error, Debug)]
+pub enum PhiError {
+    #[error("InitalizationError with message: `{error_text}`")]
+    InitalizationError { error_text: String },
+
+    #[error("InferenceError with message: `{error_text}`")]
+    InferenceError { error_text: String },
+
+    #[error("History with message: `{error_text}`")]
+    HistoryError { error_text: String }
 }

@@ -18,7 +18,19 @@ dictionary EngineOptions {
 };
 
 interface PhiEngine {
+    [Throws=PhiError]
     constructor(EngineOptions engine_options);
+
+    [Throws=PhiError]
     string run_inference(string prompt_text, [ByRef]InferenceOptions inference_options);
+    
+    [Throws=PhiError]
     void clear_history();
+};
+
+[Error]
+interface PhiError {
+    InitalizationError(string error_text);
+    InferenceError(string error_text);
+    HistoryError(string error_text);
 };
