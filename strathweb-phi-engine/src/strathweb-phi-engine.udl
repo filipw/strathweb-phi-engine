@@ -19,13 +19,22 @@ dictionary EngineOptions {
 
 interface PhiEngine {
     [Throws=PhiError]
-    constructor(EngineOptions engine_options);
+    constructor(EngineOptions engine_options, PhiEventHandler event_handler);
 
     [Throws=PhiError]
     string run_inference(string prompt_text, [ByRef]InferenceOptions inference_options);
     
     [Throws=PhiError]
     void clear_history();
+};
+
+[Trait, WithForeign]
+interface PhiEventHandler {
+    [Throws=PhiError]
+    void on_model_loaded();
+
+    [Throws=PhiError]
+    void on_inference_token(string token);
 };
 
 [Error]

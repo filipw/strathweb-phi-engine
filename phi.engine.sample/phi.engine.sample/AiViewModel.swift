@@ -6,7 +6,6 @@
 //
 
 import Foundation
-//import strathweb_phi_engineFFI
 
 class AiViewModel: ObservableObject {
     var engine: PhiEngine?
@@ -21,8 +20,7 @@ class AiViewModel: ObservableObject {
         DispatchQueue.main.async {
             self.isLoadingEngine = true
         }
-
-        self.engine = try! PhiEngine(engineOptions: EngineOptions(systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil))
+        self.engine = try! PhiEngine(engineOptions: EngineOptions(systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil), eventHandler: ModelEventsHandler(parent: self))
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true
@@ -35,15 +33,38 @@ class AiViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self.isLoading = true
                 self.prompt = ""
-                self.messages.append(ChatMessage(text: question, isUser: true))
+                self.messages.append(ChatMessage(text: question, isUser: true, state: .ok))
+                self.messages.append(ChatMessage(text: "", isUser: false, state: .waiting))
             }
             
-            let messageText = try! engine.runInference(promptText: question, inferenceOptions: self.inferenceOptions)
+            let _ = try! engine.runInference(promptText: question, inferenceOptions: self.inferenceOptions)
     
             DispatchQueue.main.async {
-                self.messages.append(ChatMessage(text: messageText, isUser: false))
                 self.isLoading = false
             }
+        }
+    }
+    
+    class ModelEventsHandler : PhiEventHandler {
+        unowned let parent: AiViewModel
+        
+        init(parent: AiViewModel) {
+            self.parent = parent
+        }
+        
+        func onInferenceToken(token: String) throws {
+            DispatchQueue.main.async {
+                if let lastMessage = self.parent.messages.last {
+                    let updatedText = lastMessage.text + token
+                    if let index = self.parent.messages.firstIndex(where: { $0.id == lastMessage.id }) {
+                        self.parent.messages[index] = ChatMessage(text: updatedText, isUser: false, state: .ok)
+                    }
+                }
+            }
+        }
+        
+        func onModelLoaded() throws {
+            print("MODEL LOADED")
         }
     }
 }

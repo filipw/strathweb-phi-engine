@@ -8,7 +8,7 @@ use candle_transformers::generation::LogitsProcessor;
 use candle_transformers::models::quantized_llama::ModelWeights as QPhi3;
 use tokenizers::Tokenizer;
 use anyhow::{Error as E, Result};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use thiserror::Error;
 
 struct PhiEngine {
@@ -16,7 +16,8 @@ struct PhiEngine {
     pub tokenizer: Tokenizer,
     pub device: Device,
     pub history: Mutex<VecDeque<String>>,
-    pub system_instruction: String
+    pub system_instruction: String,
+    pub event_handler: Arc<dyn PhiEventHandler>,
 }
 
 #[derive(Debug, Clone)]
@@ -50,8 +51,13 @@ impl Default for InferenceOptions {
     }
 }
 
+pub trait PhiEventHandler: Send + Sync {
+    fn on_model_loaded(&self) -> Result<(), PhiError>;
+    fn on_inference_token(&self, token: String) -> Result<(), PhiError>;
+  }
+
 impl PhiEngine {
-    pub fn new(engine_options: EngineOptions) -> Result<Self, PhiError> {
+    pub fn new(engine_options: EngineOptions, event_handler: Arc<dyn PhiEventHandler>) -> Result<Self, PhiError> {
         let start = std::time::Instant::now();
         // candle does not support Metal on iOS
         //let device = Device::new_metal(0).unwrap();
@@ -83,13 +89,15 @@ impl PhiEngine {
         let tokenizer = Tokenizer::from_file(tokenizer_path).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
 
         println!("Loaded the model in {:?}", start.elapsed());
+        event_handler.on_model_loaded().map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
 
         Ok(Self {
             model: model,
             tokenizer: tokenizer,
             device: device, 
             history: Mutex::new(VecDeque::with_capacity(6)),
-            system_instruction: system_instruction
+            system_instruction: system_instruction,
+            event_handler: event_handler,
         })
     }
 
@@ -119,6 +127,7 @@ impl PhiEngine {
             self.tokenizer.clone(),
             inference_options,
             &self.device,
+            self.event_handler.clone(),
         );
 
         let response = pipeline.run(&prompt_with_history, inference_options.token_count).map_err(|e: E| PhiError::InferenceError { error_text: e.to_string() })?;
@@ -139,6 +148,7 @@ struct TextGeneration {
     tokenizer: Tokenizer,
     logits_processor: LogitsProcessor,
     inference_options: InferenceOptions,
+    event_handler: Arc<dyn PhiEventHandler>,
 }
 
 impl TextGeneration {
@@ -147,6 +157,7 @@ impl TextGeneration {
         tokenizer: Tokenizer,
         inference_options: &InferenceOptions,
         device: &Device,
+        event_handler: Arc<dyn PhiEventHandler>,
     ) -> Self {
         let logits_processor = LogitsProcessor::new(inference_options.seed, inference_options.temperature, inference_options.top_p);
         Self {
@@ -155,6 +166,7 @@ impl TextGeneration {
             logits_processor,
             inference_options: inference_options.clone(),
             device: device.clone(),
+            event_handler: event_handler,
         }
     }
 
@@ -185,6 +197,7 @@ impl TextGeneration {
         if let Some(t) = tos.next_token(next_token)? {
             print!("{t}");
             std::io::stdout().flush()?;
+            self.event_handler.on_inference_token(t).map_err(|e| PhiError::InferenceError { error_text: e.to_string() })?;
         }
 
         let binding = self.tokenizer
@@ -221,6 +234,7 @@ impl TextGeneration {
                     if let Some(t) = tos.next_token(next_token)? {
                         print!("{t}");
                         std::io::stdout().flush()?;
+                        self.event_handler.on_inference_token(t).map_err(|e| PhiError::InferenceError { error_text: e.to_string() })?;
                     }
                     sampled += 1;
                 }

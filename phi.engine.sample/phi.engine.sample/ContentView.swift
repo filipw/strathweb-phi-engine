@@ -8,10 +8,16 @@
 
 import SwiftUI
 
+enum MessageState {
+    case ok
+    case waiting
+}
+
 struct ChatMessage: Identifiable {
     let id = UUID()
     let text: String
     let isUser: Bool
+    let state: MessageState
 }
 
 struct ContentView: View {
@@ -42,10 +48,6 @@ struct ContentView: View {
                             }
                             .id("wrapper").padding()
                             .padding()
-                            
-                            if viewModel.isLoading {
-                                TypingIndicatorView()
-                            }
                         }
                         .onChange(of: viewModel.messages.last?.id, perform: { value in
                             if viewModel.isLoading {
@@ -82,7 +84,7 @@ struct ContentView: View {
                     .padding(.bottom)
                 }
             }
-        }.navigationTitle("Phi Assistant")
+        }.navigationTitle("Phi-3 Assistant")
     }
 }
 
@@ -99,13 +101,17 @@ struct MessageView: View {
                     .foregroundColor(.white)
                     .cornerRadius(10)
             } else {
-                VStack {
-                    Text(message.text)
-                        .padding()
+                if message.state == .waiting {
+                    TypingIndicatorView()
+                } else {
+                    VStack {
+                        Text(message.text)
+                            .padding()
+                    }
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(10)
+                    Spacer()
                 }
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(10)
-                Spacer()
             }
         }
         .padding(.horizontal)
