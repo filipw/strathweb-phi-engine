@@ -1,4 +1,4 @@
 # Swift Phi Engine
 
-An xcframework for running Microsoft's [Phi-2](https://www.microsoft.com/en-us/research/blog/phi-2-the-surprising-power-of-small-language-models/) locally on the iPhone using [candle](https://github.com/huggingface/candle).
+An xcframework for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally on the iPhone using [candle](https://github.com/huggingface/candle).
 Includes a sample iOS app.
