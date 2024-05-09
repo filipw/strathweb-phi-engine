@@ -1,7 +1,8 @@
 # Strathweb Phi Engine
 
-An xcframework for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally on the iPhone using [candle](https://github.com/huggingface/candle).
-Includes a sample iOS app.
+An xcframework for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally in an iOS app using [candle](https://github.com/huggingface/candle).
+
+Includes a sample iOS app. Tested on iPad Air M1 (works). Should probably work on 6GB RAM iPhones too.
 
 ## Blog post
 
