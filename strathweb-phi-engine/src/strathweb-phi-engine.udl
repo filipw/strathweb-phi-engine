@@ -11,10 +11,12 @@ dictionary InferenceOptions {
 };
 
 dictionary EngineOptions {
+    string cache_dir;
     string? system_instruction;
     string? tokenizer_repo;
     string? model_repo;
     string? model_file_name;
+    string? model_revision;
 };
 
 dictionary InferenceResult {
