@@ -21,7 +21,7 @@ struct ChatMessage: Identifiable {
 }
 
 struct ContentView: View {
-    @ObservedObject var viewModel = AiViewModel()
+    @ObservedObject var viewModel = Phi3ViewModel()
 
     var body: some View {
         NavigationStack {

@@ -15,7 +15,6 @@
 		F0DCBF082BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = F0DCBF072BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework */; };
 		F0DCBF092BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F0DCBF072BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F0DCBF0C2BCD7C73004609F8 /* strathweb_phi_engine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DCBF0B2BCD7C73004609F8 /* strathweb_phi_engine.swift */; };
-		F0DCBF0E2BCD7C9A004609F8 /* MetalPerformanceShaders.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F0DCBF0D2BCD7C9A004609F8 /* MetalPerformanceShaders.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -49,7 +48,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F0DCBF0E2BCD7C9A004609F8 /* MetalPerformanceShaders.framework in Frameworks */,
 				F0DCBF082BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

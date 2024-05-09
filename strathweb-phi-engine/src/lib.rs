@@ -48,23 +48,10 @@ pub struct EngineOptions {
     pub system_instruction: Option<String>
 }
 
-impl Default for InferenceOptions {
-    fn default() -> Self {
-        Self {
-            token_count: 250,
-            temperature: Some(0.0),
-            top_p: Some(1.0),
-            repeat_penalty: 1.0,
-            repeat_last_n: 64,
-            seed: 299792458,
-        }
-    }
-}
-
 pub trait PhiEventHandler: Send + Sync {
     fn on_model_loaded(&self) -> Result<(), PhiError>;
     fn on_inference_token(&self, token: String) -> Result<(), PhiError>;
-  }
+}
 
 impl PhiEngine {
     pub fn new(engine_options: EngineOptions, event_handler: Arc<dyn PhiEventHandler>) -> Result<Self, PhiError> {
@@ -90,12 +77,6 @@ impl PhiEngine {
     
         let mut file = File::open(&model_path).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
         let model = gguf_file::Content::read(&mut file).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
-        let mut _total_size_in_bytes = 0;
-        for (_, tensor) in model.tensor_infos.iter() {
-            let elem_count = tensor.shape.elem_count();
-            _total_size_in_bytes +=
-                elem_count * tensor.ggml_dtype.type_size() / tensor.ggml_dtype.block_size();
-        }
         let model = QPhi3::from_gguf(model, &mut file, &device).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
         let tokenizer = Tokenizer::from_file(tokenizer_path).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
 

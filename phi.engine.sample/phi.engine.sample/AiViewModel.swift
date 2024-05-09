@@ -7,9 +7,9 @@
 
 import Foundation
 
-class AiViewModel: ObservableObject {
+class Phi3ViewModel: ObservableObject {
     var engine: PhiEngine?
-    let inferenceOptions: InferenceOptions = InferenceOptions(tokenCount: 100, temperature: 0.0, topP: 1.0, repeatPenalty: 1.0, repeatLastN: 64, seed: 299792458)
+    let inferenceOptions: InferenceOptions = InferenceOptions(tokenCount: 100, temperature: 0.0, topP: 1.0, repeatPenalty: 1.0, repeatLastN: 64, seed: 146628346)
     @Published var isLoading: Bool = false
     @Published var isLoadingEngine: Bool = false
     @Published var messages: [ChatMessage] = []
@@ -47,9 +47,9 @@ class AiViewModel: ObservableObject {
     }
     
     class ModelEventsHandler : PhiEventHandler {
-        unowned let parent: AiViewModel
+        unowned let parent: Phi3ViewModel
         
-        init(parent: AiViewModel) {
+        init(parent: Phi3ViewModel) {
             self.parent = parent
         }
         
