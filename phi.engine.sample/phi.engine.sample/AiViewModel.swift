@@ -37,8 +37,9 @@ class AiViewModel: ObservableObject {
                 self.messages.append(ChatMessage(text: "", isUser: false, state: .waiting))
             }
             
-            let _ = try! engine.runInference(promptText: question, inferenceOptions: self.inferenceOptions)
-    
+            let inferenceResult = try! engine.runInference(promptText: question, inferenceOptions: self.inferenceOptions)
+            print("\nTokens Generated: \(inferenceResult.tokenCount), Tokens per second: \(inferenceResult.tokensPerSecond), Duration: \(inferenceResult.duration)s")
+            
             DispatchQueue.main.async {
                 self.isLoading = false
             }

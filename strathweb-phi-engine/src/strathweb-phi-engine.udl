@@ -17,12 +17,19 @@ dictionary EngineOptions {
     string? model_file_name;
 };
 
+dictionary InferenceResult {
+    string result_text;
+    u16 token_count;
+    f64 duration;
+	f64 tokens_per_second;
+};
+
 interface PhiEngine {
     [Throws=PhiError]
     constructor(EngineOptions engine_options, PhiEventHandler event_handler);
 
     [Throws=PhiError]
-    string run_inference(string prompt_text, [ByRef]InferenceOptions inference_options);
+    InferenceResult run_inference(string prompt_text, [ByRef]InferenceOptions inference_options);
     
     [Throws=PhiError]
     void clear_history();

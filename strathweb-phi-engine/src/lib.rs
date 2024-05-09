@@ -1,11 +1,13 @@
 uniffi::include_scaffolding!("strathweb-phi-engine");
 
 use std::collections::VecDeque;
+use std::fs::File;
 use std::io::Write;
 use candle_core::quantized::gguf_file;
 use candle_core::{Device, Tensor};
 use candle_transformers::generation::LogitsProcessor;
 use candle_transformers::models::quantized_llama::ModelWeights as QPhi3;
+use hf_hub::api::sync::Api;
 use tokenizers::Tokenizer;
 use anyhow::{Error as E, Result};
 use std::sync::{Arc, Mutex};
@@ -28,6 +30,14 @@ pub struct InferenceOptions {
     pub repeat_penalty: f32,
     pub repeat_last_n: u16,
     pub seed: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct InferenceResult {
+    pub token_count: u16,
+    pub result_text: String,
+    pub duration: f64,
+    pub tokens_per_second: f64,
 }
 
 #[derive(Debug, Clone)]
@@ -70,15 +80,15 @@ impl PhiEngine {
         let model_file_name = engine_options.model_file_name.unwrap_or("Phi-3-mini-4k-instruct-q4.gguf".to_string());
         let system_instruction = engine_options.system_instruction.unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
 
-        let api = hf_hub::api::sync::Api::new().map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
+        let api = Api::new().map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
         let api = api.model(model_repo.to_string());
         let model_path = api.get(model_file_name.as_str()).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
 
-        let api = hf_hub::api::sync::Api::new().map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
+        let api = Api::new().map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
         let api = api.model(tokenizer_repo.to_string());
         let tokenizer_path = api.get("tokenizer.json").map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
     
-        let mut file = std::fs::File::open(&model_path).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
+        let mut file = File::open(&model_path).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
         let model = gguf_file::Content::read(&mut file).map_err(|e| PhiError::InitalizationError { error_text: e.to_string() })?;
         let mut _total_size_in_bytes = 0;
         for (_, tensor) in model.tensor_infos.iter() {
@@ -102,7 +112,7 @@ impl PhiEngine {
         })
     }
 
-    pub fn run_inference(&self, prompt_text: String, inference_options: &InferenceOptions) -> Result<String, PhiError> {
+    pub fn run_inference(&self, prompt_text: String, inference_options: &InferenceOptions) -> Result<InferenceResult, PhiError> {
         let mut history = self.history.lock().map_err(|e| PhiError::HistoryError { error_text: e.to_string() })?;
 
         // todo: this is a hack to keep the history length short so that we don't overflow the token limit
@@ -132,7 +142,7 @@ impl PhiEngine {
         );
 
         let response = pipeline.run(&prompt_with_history, inference_options.token_count).map_err(|e: E| PhiError::InferenceError { error_text: e.to_string() })?;
-        history.push_back(response.clone());
+        history.push_back(response.result_text.clone());
         Ok(response)
     }
 
@@ -171,7 +181,8 @@ impl TextGeneration {
         }
     }
 
-    fn run(&mut self, prompt: &str, sample_len: u16) -> Result<String> {
+    // inference code adapted from https://github.com/huggingface/candle/blob/main/candle-examples/examples/quantized/main.rs
+    fn run(&mut self, prompt: &str, sample_len: u16) -> Result<InferenceResult> {
         println!("{}", prompt);
 
         let mut tos = TokenOutputStream::new(self.tokenizer.clone());
@@ -181,7 +192,6 @@ impl TextGeneration {
         let tokens = tokens.get_ids();
 
         let mut all_tokens = vec![];
-        let start_prompt_processing = std::time::Instant::now();
         let mut next_token = {
             let mut next_token = 0;
             for (pos, token) in tokens.iter().enumerate() {
@@ -193,7 +203,6 @@ impl TextGeneration {
             next_token
         };
 
-        let prompt_dt = start_prompt_processing.elapsed();
         all_tokens.push(next_token);
         if let Some(t) = tos.next_token(next_token)? {
             print!("{t}");
@@ -241,19 +250,13 @@ impl TextGeneration {
                 }
         
                 let dt = start_post_prompt.elapsed();
-                println!(
-                    "\n\n{:4} prompt tokens processed in {:.2} seconds ({:.2} token/s)",
-                    tokens.len(),
-                    prompt_dt.as_secs_f64(),
-                    tokens.len() as f64 / prompt_dt.as_secs_f64(),
-                );
-                println!(
-                    "{sampled} tokens generated in {:.2} seconds ({:.2} token/s)",
-                    dt.as_secs_f64(),
-                    sampled as f64 / dt.as_secs_f64(),
-                );
-        
-                Ok(tos.decode_all().map_err(E::msg)?)
+                let inference_result = InferenceResult {
+                    token_count: sampled,
+                    result_text: tos.decode_all().map_err(E::msg)?,
+                    duration: dt.as_secs_f64(),
+                    tokens_per_second: sampled as f64 / dt.as_secs_f64(),
+                };
+                Ok(inference_result)
             },
             Err(e) => return Err(e)
         } 
@@ -298,14 +301,6 @@ impl TokenOutputStream {
         };
         self.tokens.push(token);
         let text = self.decode(&self.tokens[self.prev_index..])?;
-        // if text.len() > prev_text.len() && text.chars().last().unwrap().is_ascii() {
-        //     let text = text.split_at(prev_text.len());
-        //     self.prev_index = self.current_index;
-        //     self.current_index = self.tokens.len();
-        //     Ok(Some(text.1.to_string()))
-        // } else {
-        //     Ok(None)
-        // }
 
         if text.len() > prev_text.len() {
             match text.chars().last().ok_or_else(|| anyhow::Error::msg("No last character")) {
