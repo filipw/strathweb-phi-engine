@@ -4,6 +4,11 @@ An xcframework for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us
 
 Includes a sample iOS app.
 
+## Building instructions
+
+Run `./build.sh` to build the xcframework.
+The open `phi.engine.sample/phi.engine.sample.xcodeproj` and build the SwiftUI app.
+
 ## Blog post
 
 For a detailed explanation of how this works, check out the blog post [here](https://www.strathweb.com/2024/05/running-microsoft-phi-3-model-in-an-ios-app-with-rust/).
