@@ -3,7 +3,7 @@
 NAME="strathweb_phi_engine"
 HEADERPATH="strathweb-phi-engine/bindings/strathweb_phi_engineFFI.h"
 TARGETDIR="strathweb-phi-engine/target"
-OUTDIR="phi.engine.sample/phi.engine.sample"
+OUTDIR="samples/ios/phi.engine.sample/phi.engine.sample"
 RELDIR="release"
 STATIC_LIB_NAME="lib${NAME}.a"
 NEW_HEADER_DIR="strathweb-phi-engine/bindings/include"
