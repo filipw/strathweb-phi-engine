@@ -37,7 +37,7 @@ interface PhiEngine {
     void clear_history();
 };
 
-[Trait, WithForeign]
+[Trait]
 interface PhiEventHandler {
     [Throws=PhiError]
     void on_model_loaded();

@@ -1,13 +1,13 @@
 # Strathweb Phi Engine
 
-An xcframework for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally in an iOS app using [candle](https://github.com/huggingface/candle).
-
-Includes a sample iOS app.
+An cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally in an iOS app using [candle](https://github.com/huggingface/candle).
 
 ## Building instructions
 
-Run `./build.sh` to build the xcframework.
-The open `phi.engine.sample/phi.engine.sample.xcodeproj` and build the SwiftUI app.
+### iOS
+
+Run `./build-ios.sh` to build the xcframework.
+Then open `samples/io/phi.engine.sample/phi.engine.sample.xcodeproj` and build the SwiftUI app.
 
 ## Blog post
 
