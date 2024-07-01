@@ -28,7 +28,7 @@ dictionary InferenceResult {
 
 interface PhiEngine {
     [Throws=PhiError]
-    constructor(EngineOptions engine_options, PhiEventHandler event_handler);
+    constructor(EngineOptions engine_options, BoxedPhiEventHandler event_handler);
 
     [Throws=PhiError]
     InferenceResult run_inference(string prompt_text, [ByRef]InferenceOptions inference_options);
@@ -37,13 +37,16 @@ interface PhiEngine {
     void clear_history();
 };
 
-[Trait]
-interface PhiEventHandler {
+callback interface PhiEventHandler {
     [Throws=PhiError]
     void on_model_loaded();
 
     [Throws=PhiError]
     void on_inference_token(string token);
+};
+
+interface BoxedPhiEventHandler {
+    constructor(PhiEventHandler handler);
 };
 
 [Error]
