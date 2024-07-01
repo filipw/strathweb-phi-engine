@@ -11,9 +11,9 @@
 		F03B89D72BCD548E004D61DA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F03B89D62BCD548E004D61DA /* ContentView.swift */; };
 		F03B89D92BCD548F004D61DA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F03B89D82BCD548F004D61DA /* Assets.xcassets */; };
 		F03B89DC2BCD548F004D61DA /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F03B89DB2BCD548F004D61DA /* Preview Assets.xcassets */; };
+		F05258042C33015F00383A21 /* strathweb_phi_engine_framework.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = F05258032C33015F00383A21 /* strathweb_phi_engine_framework.xcframework */; };
+		F05258052C33015F00383A21 /* strathweb_phi_engine_framework.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F05258032C33015F00383A21 /* strathweb_phi_engine_framework.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F0DCBF052BCD7B8A004609F8 /* AiViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DCBF042BCD7B8A004609F8 /* AiViewModel.swift */; };
-		F0DCBF082BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = F0DCBF072BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework */; };
-		F0DCBF092BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F0DCBF072BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F0DCBF0C2BCD7C73004609F8 /* strathweb_phi_engine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DCBF0B2BCD7C73004609F8 /* strathweb_phi_engine.swift */; };
 /* End PBXBuildFile section */
 
@@ -24,7 +24,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				F0DCBF092BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework in Embed Frameworks */,
+				F05258052C33015F00383A21 /* strathweb_phi_engine_framework.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -37,9 +37,9 @@
 		F03B89D62BCD548E004D61DA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		F03B89D82BCD548F004D61DA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F03B89DB2BCD548F004D61DA /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		F05258032C33015F00383A21 /* strathweb_phi_engine_framework.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = strathweb_phi_engine_framework.xcframework; path = phi.engine.sample/strathweb_phi_engine_framework.xcframework; sourceTree = "<group>"; };
 		F0DCBF042BCD7B8A004609F8 /* AiViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiViewModel.swift; sourceTree = "<group>"; };
-		F0DCBF072BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = strathweb_phi_engine_framework.xcframework; path = phi.engine.sample/strathweb_phi_engine_framework.xcframework; sourceTree = "<group>"; };
-		F0DCBF0B2BCD7C73004609F8 /* strathweb_phi_engine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = strathweb_phi_engine.swift; path = "../strathweb-phi-engine/bindings/strathweb_phi_engine.swift"; sourceTree = "<group>"; };
+		F0DCBF0B2BCD7C73004609F8 /* strathweb_phi_engine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = strathweb_phi_engine.swift; path = "../../../strathweb-phi-engine/bindings/strathweb_phi_engine.swift"; sourceTree = "<group>"; };
 		F0DCBF0D2BCD7C9A004609F8 /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -48,7 +48,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F0DCBF082BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework in Frameworks */,
+				F05258042C33015F00383A21 /* strathweb_phi_engine_framework.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -96,8 +96,8 @@
 		F0DCBF062BCD7BA2004609F8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F05258032C33015F00383A21 /* strathweb_phi_engine_framework.xcframework */,
 				F0DCBF0D2BCD7C9A004609F8 /* MetalPerformanceShaders.framework */,
-				F0DCBF072BCD7BA2004609F8 /* strathweb_phi_engine_framework.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
