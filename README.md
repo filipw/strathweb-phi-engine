@@ -9,6 +9,23 @@ An cross-platform library for running Microsoft's [Phi-3](https://azure.microsof
 Run `./build-ios.sh` to build the xcframework.
 Then open `samples/io/phi.engine.sample/phi.engine.sample.xcodeproj` and build the SwiftUI app.
 
+### C#
+
+Install UniFFI C# bindings generator
+
+```shell
+cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
+```
+
+Run
+
+```shell
+cd strathweb-phi-engine
+cargo build --release
+cd ../samples/csharp/console
+dotnet run -c Release
+```
+
 ## Blog post
 
 For a detailed explanation of how this works, check out the blog post [here](https://www.strathweb.com/2024/05/running-microsoft-phi-3-model-in-an-ios-app-with-rust/).

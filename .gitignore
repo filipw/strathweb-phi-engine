@@ -402,3 +402,5 @@ strathweb-phi-engine/target
 phi.engine.sample/phi.engine.sample/strathweb_phi_engine_framework.xcframework
 phi.engine.sample/phi.engine.sample.xcodeproj/project.xcworkspace/xcuserdata
 phi.engine.sample/phi.engine.sample.xcodeproj/xcuserdata
+samples/ios/phi.engine.sample/phi.engine.sample/strathweb_phi_engine_framework.xcframework
+*.xcuserstate

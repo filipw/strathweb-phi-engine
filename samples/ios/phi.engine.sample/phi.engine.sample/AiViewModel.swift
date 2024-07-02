@@ -23,7 +23,7 @@ class Phi3ViewModel: ObservableObject {
         
         // we need to hardcode this revision for now until
         // this issue is resolved https://github.com/huggingface/candle/issues/2154
-        self.engine = try! PhiEngine(engineOptions: EngineOptions(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil, modelRevision: "5eef2ce24766d31909c0b269fe90c817a8f263fb"), eventHandler: ModelEventsHandler(parent: self))
+        self.engine = try! PhiEngine(engineOptions: EngineOptions(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil, modelRevision: "5eef2ce24766d31909c0b269fe90c817a8f263fb"), eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler(parent: self)))
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true

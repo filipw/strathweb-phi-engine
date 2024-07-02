@@ -21,7 +21,7 @@ struct PhiEngine {
     pub device: Device,
     pub history: Mutex<VecDeque<String>>,
     pub system_instruction: String,
-    pub event_handler: Arc<dyn PhiEventHandler>,
+    pub event_handler: Arc<BoxedPhiEventHandler>,
 }
 
 #[derive(Debug, Clone)]
@@ -57,10 +57,20 @@ pub trait PhiEventHandler: Send + Sync {
     fn on_inference_token(&self, token: String) -> Result<(), PhiError>;
 }
 
+pub struct BoxedPhiEventHandler {
+    pub handler: Box<dyn PhiEventHandler>,
+}
+
+impl BoxedPhiEventHandler {
+    pub fn new(handler: Box<dyn PhiEventHandler>) -> Self {
+        Self { handler }
+    }
+}
+
 impl PhiEngine {
     pub fn new(
         engine_options: EngineOptions,
-        event_handler: Arc<dyn PhiEventHandler>,
+        event_handler: Arc<BoxedPhiEventHandler>,
     ) -> Result<Self, PhiError> {
         let start = std::time::Instant::now();
         // candle does not support Metal on iOS yet
@@ -142,7 +152,7 @@ impl PhiEngine {
             })?;
 
         println!("Loaded the model in {:?}", start.elapsed());
-        event_handler
+        event_handler.handler
             .on_model_loaded()
             .map_err(|e| PhiError::InitalizationError {
                 error_text: e.to_string(),
@@ -224,7 +234,7 @@ struct TextGeneration {
     tokenizer: Tokenizer,
     logits_processor: LogitsProcessor,
     inference_options: InferenceOptions,
-    event_handler: Arc<dyn PhiEventHandler>,
+    event_handler: Arc<BoxedPhiEventHandler>,
 }
 
 impl TextGeneration {
@@ -233,7 +243,7 @@ impl TextGeneration {
         tokenizer: Tokenizer,
         inference_options: &InferenceOptions,
         device: &Device,
-        event_handler: Arc<dyn PhiEventHandler>,
+        event_handler: Arc<BoxedPhiEventHandler>,
     ) -> Self {
         let logits_processor = LogitsProcessor::new(
             inference_options.seed,
@@ -274,7 +284,7 @@ impl TextGeneration {
         if let Some(t) = tos.next_token(next_token)? {
             print!("{t}");
             std::io::stdout().flush()?;
-            self.event_handler
+            self.event_handler.handler
                 .on_inference_token(t)
                 .map_err(|e| PhiError::InferenceError {
                     error_text: e.to_string(),
@@ -325,7 +335,7 @@ impl TextGeneration {
             }
 
             if let Some(t) = tos.next_token(next_token)? {
-                self.event_handler
+                self.event_handler.handler
                     .on_inference_token(t)
                     .map_err(|e| PhiError::InferenceError {
                         error_text: e.to_string(),
