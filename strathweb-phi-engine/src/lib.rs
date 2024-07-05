@@ -293,8 +293,6 @@ impl TextGeneration {
 
         all_tokens.push(next_token);
         if let Some(t) = tos.next_token(next_token)? {
-            print!("{t}");
-            std::io::stdout().flush()?;
             self.event_handler.handler
                 .on_inference_token(t)
                 .map_err(|e| PhiError::InferenceError {
