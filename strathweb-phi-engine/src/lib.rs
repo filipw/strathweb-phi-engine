@@ -200,7 +200,6 @@ impl PhiEngine {
 
         // Phi-3 has no system prompt so we inject it as a user prompt
         let prompt_with_history = format!("<|user|>\nYour overall instructions are: {}<|end|>\n<|assistant|>Understood, I will adhere to these instructions<|end|>{}\n<|assistant|>\n", self.system_instruction, history_prompt);
-        //let prompt_with_history = format!("{}\n<|assistant|>\n", history_prompt);
 
         let mut pipeline = TextGeneration::new(
             &self.model,
