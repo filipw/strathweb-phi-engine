@@ -9,7 +9,7 @@ import Foundation
 
 class Phi3ViewModel: ObservableObject {
     var engine: PhiEngine?
-    let inferenceOptions: InferenceOptions = InferenceOptions(tokenCount: 100, temperature: 0.7, topP: nil, repeatPenalty: 1.0, repeatLastN: 64, seed: 146628346)
+    let inferenceOptions: InferenceOptions = InferenceOptions(tokenCount: 100, temperature: 0.7, topP: nil, topK: nil, repeatPenalty: 1.0, repeatLastN: 64, seed: 146628346)
     @Published var isLoading: Bool = false
     @Published var isLoadingEngine: Bool = false
     @Published var messages: [ChatMessage] = []
@@ -21,9 +21,7 @@ class Phi3ViewModel: ObservableObject {
             self.isLoadingEngine = true
         }
         
-        // we need to hardcode this revision for now until
-        // this issue is resolved https://github.com/huggingface/candle/issues/2154
-        self.engine = try! PhiEngine(engineOptions: EngineOptions(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil, modelRevision: "5eef2ce24766d31909c0b269fe90c817a8f263fb"), eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler(parent: self)))
+        self.engine = try! PhiEngine(engineOptions: EngineOptions(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil, modelRevision: nil, useFlashAttention: false), eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler(parent: self)))
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true

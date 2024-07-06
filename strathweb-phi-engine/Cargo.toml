@@ -11,7 +11,6 @@ thiserror = "1.0"
 uniffi = { version = "0.25.0", features=["build"] }
 anyhow = "1.0.81"
 candle-core = { version = "0.6.0" }
-candle-nn = { version = "0.6.0" }
 candle-transformers = { version = "0.6.0" }
 hf-hub = { version = "0.3.2", features = ["tokio"] }
 tokenizers = "0.15.2"
