@@ -32,6 +32,8 @@ For a detailed explanation of how this works, check out the blog post [here](htt
 
 ## Compatibility notes
 
+✅ Tested on Windows ARM64
+✅ Tested on Linux ARM64
 ✅ Tested on iPad Air M1 8GB RAM
 ✅ Should work on 6GB RAM iPhones too
 ❌ Will not work on 4GB RAM iPhones
