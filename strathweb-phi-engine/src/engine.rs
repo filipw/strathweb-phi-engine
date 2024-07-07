@@ -15,13 +15,16 @@ use tokenizers::Tokenizer;
 use crate::token_stream::TokenOutputStream;
 use crate::PhiError;
 
-pub struct PhiEngine {
-    pub model: Phi3,
-    pub tokenizer: Tokenizer,
-    pub device: Device,
-    pub history: Mutex<VecDeque<String>>,
-    pub system_instruction: String,
-    pub event_handler: Arc<BoxedPhiEventHandler>,
+#[derive(Debug, Clone)]
+pub struct HistoryEntry {
+    pub role: Role,
+    pub text: String,
+}
+
+#[derive(Debug, Clone)]
+pub enum Role {
+    User,
+    Assistant,
 }
 
 #[derive(Debug, Clone)]
@@ -67,6 +70,15 @@ impl BoxedPhiEventHandler {
     pub fn new(handler: Box<dyn PhiEventHandler>) -> Self {
         Self { handler }
     }
+}
+
+pub struct PhiEngine {
+    pub model: Phi3,
+    pub tokenizer: Tokenizer,
+    pub device: Device,
+    pub history: Mutex<VecDeque<HistoryEntry>>,
+    pub system_instruction: String,
+    pub event_handler: Arc<BoxedPhiEventHandler>,
 }
 
 impl PhiEngine {
@@ -182,24 +194,20 @@ impl PhiEngine {
             error_text: e.to_string(),
         })?;
 
-        // todo: this is a hack to keep the history length short so that we don't overflow the token limit
-        // under normal circumstances we should count the tokens
-        if history.len() == 10 {
-            history.pop_front();
-            history.pop_front();
-        }
-
-        history.push_back(prompt_text.clone());
+        self.trim_history_to_token_limit(&mut history, 3750);
+        history.push_back(HistoryEntry {
+            role: Role::User,
+            text: prompt_text.clone(),
+        });
 
         let history_prompt = history
             .iter()
-            .enumerate()
-            .map(|(i, text)| {
-                if i % 2 == 0 {
-                    format!("\n<|user|>\n{}<|end|>", text)
-                } else {
-                    format!("\n<|assistant|>\n{}<|end|>", text)
-                }
+            .map(|entry| {
+                let role = match entry.role {
+                    Role::User => "user",
+                    Role::Assistant => "assistant",
+                };
+                format!("<{}>{}</{}>", role, entry.text, role)
             })
             .collect::<String>();
 
@@ -219,7 +227,12 @@ impl PhiEngine {
             .map_err(|e: E| PhiError::InferenceError {
                 error_text: e.to_string(),
             })?;
-        history.push_back(response.result_text.clone());
+
+        history.push_back(HistoryEntry {
+            role: Role::Assistant,
+            text: response.result_text.clone(),
+        });
+
         Ok(response)
     }
 
@@ -229,6 +242,34 @@ impl PhiEngine {
         })?;
         history.clear();
         Ok(())
+    }
+
+    pub fn get_history(&self) -> Result<Vec<HistoryEntry>, PhiError> {
+        let history = self.history.lock().map_err(|e| PhiError::HistoryError {
+            error_text: e.to_string(),
+        })?;
+        Ok(history.clone().into_iter().collect())
+    }
+
+    fn count_tokens(&self, text: &str) -> usize {
+        self.tokenizer.encode(text, true).unwrap().get_ids().len()
+    }
+
+    fn trim_history_to_token_limit(
+        &self,
+        history: &mut VecDeque<HistoryEntry>,
+        token_limit: usize,
+    ) {
+        let mut token_count = history
+            .iter()
+            .map(|entry| self.count_tokens(&entry.text))
+            .sum::<usize>();
+
+        while token_count > token_limit {
+            if let Some(front) = history.pop_front() {
+                token_count -= self.count_tokens(&front.text);
+            }
+        }
     }
 }
 

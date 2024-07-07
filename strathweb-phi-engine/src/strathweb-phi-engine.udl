@@ -28,6 +28,11 @@ dictionary InferenceResult {
 	f64 tokens_per_second;
 };
 
+dictionary HistoryEntry {
+    Role role;
+    string text;
+};
+
 interface PhiEngine {
     [Throws=PhiError]
     constructor(EngineOptions engine_options, BoxedPhiEventHandler event_handler);
@@ -37,6 +42,14 @@ interface PhiEngine {
     
     [Throws=PhiError]
     void clear_history();
+
+    [Throws=PhiError]
+    sequence<HistoryEntry> get_history();
+};
+
+enum Role {
+    "Assistant",
+    "User",
 };
 
 callback interface PhiEventHandler {
