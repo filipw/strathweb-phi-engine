@@ -19,6 +19,7 @@ dictionary EngineOptions {
     string? model_file_name;
     string? model_revision;
     boolean use_flash_attention;
+    u16? context_window;
 };
 
 dictionary InferenceResult {

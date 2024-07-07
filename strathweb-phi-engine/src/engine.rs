@@ -55,6 +55,7 @@ pub struct EngineOptions {
     pub model_revision: Option<String>,
     pub use_flash_attention: bool,
     pub system_instruction: Option<String>,
+    pub context_window: Option<u16>,
 }
 
 pub trait PhiEventHandler: Send + Sync {
@@ -79,6 +80,7 @@ pub struct PhiEngine {
     pub history: Mutex<VecDeque<HistoryEntry>>,
     pub system_instruction: String,
     pub event_handler: Arc<BoxedPhiEventHandler>,
+    pub context_window: u16,
 }
 
 impl PhiEngine {
@@ -103,6 +105,7 @@ impl PhiEngine {
             .model_file_name
             .unwrap_or("Phi-3-mini-4k-instruct-q4.gguf".to_string());
         let model_revision = engine_options.model_revision.unwrap_or("main".to_string());
+        let context_window = engine_options.context_window.unwrap_or(3800);
         let system_instruction = engine_options.system_instruction.unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
 
         let api_builder =
@@ -182,6 +185,7 @@ impl PhiEngine {
             history: Mutex::new(VecDeque::with_capacity(6)),
             system_instruction: system_instruction,
             event_handler: event_handler,
+            context_window: context_window,
         })
     }
 
@@ -194,7 +198,7 @@ impl PhiEngine {
             error_text: e.to_string(),
         })?;
 
-        self.trim_history_to_token_limit(&mut history, 3750);
+        self.trim_history_to_token_limit(&mut history, self.context_window);
         history.push_back(HistoryEntry {
             role: Role::User,
             text: prompt_text.clone(),
@@ -258,14 +262,14 @@ impl PhiEngine {
     fn trim_history_to_token_limit(
         &self,
         history: &mut VecDeque<HistoryEntry>,
-        token_limit: usize,
+        token_limit: u16,
     ) {
         let mut token_count = history
             .iter()
             .map(|entry| self.count_tokens(&entry.text))
             .sum::<usize>();
-
-        while token_count > token_limit {
+    
+        while token_count > token_limit as usize {
             if let Some(front) = history.pop_front() {
                 token_count -= self.count_tokens(&front.text);
             }
