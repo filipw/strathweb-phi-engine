@@ -19,6 +19,7 @@ dictionary EngineOptions {
     string? model_file_name;
     string? model_revision;
     boolean use_flash_attention;
+    u16? context_window;
 };
 
 dictionary InferenceResult {
@@ -26,6 +27,11 @@ dictionary InferenceResult {
     u16 token_count;
     f64 duration;
 	f64 tokens_per_second;
+};
+
+dictionary HistoryEntry {
+    Role role;
+    string text;
 };
 
 interface PhiEngine {
@@ -37,6 +43,14 @@ interface PhiEngine {
     
     [Throws=PhiError]
     void clear_history();
+
+    [Throws=PhiError]
+    sequence<HistoryEntry> get_history();
+};
+
+enum Role {
+    "Assistant",
+    "User",
 };
 
 callback interface PhiEventHandler {

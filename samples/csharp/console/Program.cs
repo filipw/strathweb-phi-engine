@@ -19,11 +19,12 @@ var model = new PhiEngine(
         modelRepo: null, 
         modelFileName: null, 
         modelRevision: null,
-        useFlashAttention: false),
+        useFlashAttention: false,
+        contextWindow: null),
     new BoxedPhiEventHandler(new ModelEventsHandler()));
 
 var result = model.RunInference("Write a haiku about ice hockey", inferenceOptions);
-Console.WriteLine($"{Environment.NewLine}Tokens Generated: {result.tokenCount}{Environment.NewLine}Token per second: {result.tokensPerSecond}{Environment.NewLine}Duration: {result.duration}s");
+Console.WriteLine($"{Environment.NewLine}Tokens Generated: {result.tokenCount}{Environment.NewLine}Tokens per second: {result.tokensPerSecond}{Environment.NewLine}Duration: {result.duration}s");
 
 class ModelEventsHandler : PhiEventHandler
 {

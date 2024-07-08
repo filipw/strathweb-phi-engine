@@ -6,6 +6,8 @@ use crate::engine::InferenceOptions;
 use crate::engine::InferenceResult;
 use crate::engine::PhiEngine;
 use crate::engine::PhiEventHandler;
+use crate::engine::Role;
+use crate::engine::HistoryEntry;
 use thiserror::Error;
 
 pub mod engine;
