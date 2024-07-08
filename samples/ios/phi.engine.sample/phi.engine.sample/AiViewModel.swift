@@ -21,7 +21,7 @@ class Phi3ViewModel: ObservableObject {
             self.isLoadingEngine = true
         }
         
-        self.engine = try! PhiEngine(engineOptions: EngineOptions(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil, modelRevision: nil, useFlashAttention: false), eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler(parent: self)))
+        self.engine = try! PhiEngine(engineOptions: EngineOptions(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil, modelRevision: nil, useFlashAttention: false, contextWindow: nil), eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler(parent: self)))
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true

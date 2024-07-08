@@ -127,7 +127,7 @@ impl PhiEngine {
                 .map_err(|e| PhiError::InitalizationError {
                     error_text: e.to_string(),
                 })?;
-        print!("Downloaded model to {:?}...", model_path);
+        println!(" --> Downloaded model to {:?}...", model_path);
 
         let api_builder =
             ApiBuilder::new().with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
@@ -147,7 +147,7 @@ impl PhiEngine {
                 .map_err(|e| PhiError::InitalizationError {
                     error_text: e.to_string(),
                 })?;
-        print!("Downloaded tokenizer to {:?}...", tokenizer_path);
+        println!(" --> Downloaded tokenizer to {:?}...", tokenizer_path);
 
         let mut file = File::open(&model_path).map_err(|e| PhiError::InitalizationError {
             error_text: e.to_string(),
@@ -170,7 +170,7 @@ impl PhiEngine {
                 error_text: e.to_string(),
             })?;
 
-        println!("Loaded the model in {:?}", start.elapsed());
+        println!(" --> Loaded the model in {:?}", start.elapsed());
         event_handler
             .handler
             .on_model_loaded()
@@ -211,7 +211,7 @@ impl PhiEngine {
                     Role::User => "user",
                     Role::Assistant => "assistant",
                 };
-                format!("<{}>{}</{}>", role, entry.text, role)
+                format!("\n<|{}|>{}<|end|>", role, entry.text)
             })
             .collect::<String>();
 
@@ -327,7 +327,7 @@ impl TextGeneration {
 
     // inference code adapted from https://github.com/huggingface/candle/blob/main/candle-examples/examples/quantized/main.rs
     fn run(&mut self, prompt: &str, sample_len: u16) -> Result<InferenceResult> {
-        println!("{}", prompt);
+        //println!("{}", prompt);
 
         let mut tos = TokenOutputStream::new(self.tokenizer.clone());
         let tokens = tos.tokenizer().encode(prompt, true).map_err(E::msg)?;
@@ -393,7 +393,7 @@ impl TextGeneration {
                 || &next_token == end_token
                 || &next_token == assistant_token
             {
-                println!("Breaking due to eos: ${:?}$", next_token);
+                println!("\n\nBreaking due to end token: ${:?}$", next_token);
                 std::io::stdout().flush()?;
                 break;
             }
