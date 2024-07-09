@@ -73,6 +73,116 @@ impl BoxedPhiEventHandler {
     }
 }
 
+pub struct PhiEngineBuilder {
+    inner: Mutex<PhiEngineBuilderInner>
+}
+
+impl PhiEngineBuilder {
+
+    pub fn new() -> Self {
+        Self {
+            inner: Mutex::new(PhiEngineBuilderInner::new())
+        }
+    }
+    
+    pub fn with_context_window(&self, context_window: u16) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.context_window = Some(context_window);
+        Ok(())
+    }
+
+    pub fn with_system_instruction(&self, system_instruction: String) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.system_instruction = Some(system_instruction);
+        Ok(())
+    }
+
+    pub fn with_model_repo(&self, model_repo: String) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.model_repo = Some(model_repo);
+        Ok(())
+    }
+
+    pub fn with_tokenizer_repo(&self, tokenizer_repo: String) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.tokenizer_repo = Some(tokenizer_repo);
+        Ok(())
+    }
+
+    pub fn with_model_file_name(&self, model_file_name: String) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.model_file_name = Some(model_file_name);
+        Ok(())
+    }
+
+    pub fn with_model_revision(&self, model_revision: String) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.model_revision = Some(model_revision);
+        Ok(())
+    }
+
+    pub fn with_flash_attention(&self, use_flash_attention: bool) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.use_flash_attention = use_flash_attention;
+        Ok(())
+    }
+
+    pub fn build(&self, cache_dir: String, event_handler: Arc<BoxedPhiEventHandler>) -> Result<Arc<PhiEngine>, PhiError> {
+        let inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        let engine_options = EngineOptions {
+            cache_dir: cache_dir,
+            model_repo: inner.model_repo.clone(),
+            tokenizer_repo: inner.tokenizer_repo.clone(),
+            model_file_name: inner.model_file_name.clone(),
+            model_revision: inner.model_revision.clone(),
+            use_flash_attention: inner.use_flash_attention,
+            system_instruction: inner.system_instruction.clone(),
+            context_window: inner.context_window.clone(),
+        };
+        PhiEngine::new(engine_options, event_handler).map(|engine| Arc::new(engine))
+    }
+}
+
+struct PhiEngineBuilderInner {
+    context_window: Option<u16>,
+    system_instruction: Option<String>,
+    model_repo: Option<String>,
+    tokenizer_repo: Option<String>,
+    model_file_name: Option<String>,
+    model_revision: Option<String>,
+    use_flash_attention: bool,
+}
+
+impl PhiEngineBuilderInner {
+    fn new() -> Self {
+        Self {
+            context_window: None,
+            system_instruction: None,
+            model_repo: None,
+            tokenizer_repo: None,
+            model_file_name: None,
+            model_revision: None,
+            use_flash_attention: false,
+        }
+    }
+}
+
 pub struct PhiEngine {
     pub model: Phi3,
     pub tokenizer: Tokenizer,

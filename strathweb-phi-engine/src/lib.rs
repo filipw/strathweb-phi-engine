@@ -1,7 +1,7 @@
 uniffi::include_scaffolding!("strathweb-phi-engine");
 
 use crate::engine::BoxedPhiEventHandler;
-use crate::engine::EngineOptions;
+use crate::engine::PhiEngineBuilder;
 use crate::engine::InferenceOptions;
 use crate::engine::InferenceResult;
 use crate::engine::PhiEngine;
@@ -15,6 +15,9 @@ pub mod token_stream;
 
 #[derive(Error, Debug)]
 pub enum PhiError {
+    #[error("LockingError with message: `{error_text}`")]
+    LockingError { error_text: String },
+
     #[error("InitalizationError with message: `{error_text}`")]
     InitalizationError { error_text: String },
 

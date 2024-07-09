@@ -11,17 +11,6 @@ dictionary InferenceOptions {
 	u64 seed;
 };
 
-dictionary EngineOptions {
-    string cache_dir;
-    string? system_instruction;
-    string? tokenizer_repo;
-    string? model_repo;
-    string? model_file_name;
-    string? model_revision;
-    boolean use_flash_attention;
-    u16? context_window;
-};
-
 dictionary InferenceResult {
     string result_text;
     u16 token_count;
@@ -36,9 +25,6 @@ dictionary HistoryEntry {
 
 interface PhiEngine {
     [Throws=PhiError]
-    constructor(EngineOptions engine_options, BoxedPhiEventHandler event_handler);
-
-    [Throws=PhiError]
     InferenceResult run_inference(string prompt_text, [ByRef]InferenceOptions inference_options);
     
     [Throws=PhiError]
@@ -46,6 +32,34 @@ interface PhiEngine {
 
     [Throws=PhiError]
     sequence<HistoryEntry> get_history();
+};
+
+interface PhiEngineBuilder {
+    constructor();
+
+    [Throws=PhiError]
+    void with_context_window(u16 context_window);
+
+    [Throws=PhiError]
+    void with_system_instruction(string system_instruction);
+
+    [Throws=PhiError]
+    void with_model_repo(string model_repo);
+
+    [Throws=PhiError]
+    void with_tokenizer_repo(string tokenizer_repo);
+
+    [Throws=PhiError]
+    void with_model_file_name(string model_file_name);
+
+    [Throws=PhiError]
+    void with_model_revision(string model_revision);
+
+    [Throws=PhiError]
+    void with_flash_attention(boolean use_flash_attention);
+
+    [Throws=PhiError]
+    PhiEngine build(string cache_dir, BoxedPhiEventHandler event_handler);
 };
 
 enum Role {
@@ -68,6 +82,7 @@ interface BoxedPhiEventHandler {
 [Error]
 interface PhiError {
     InitalizationError(string error_text);
+    LockingError(string error_text);
     InferenceError(string error_text);
     HistoryError(string error_text);
 };
