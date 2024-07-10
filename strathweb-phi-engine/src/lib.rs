@@ -16,6 +16,7 @@ use thiserror::Error;
 
 pub mod engine;
 pub mod token_stream;
+pub mod text_generator;
 
 #[derive(Error, Debug)]
 pub enum PhiError {
