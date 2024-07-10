@@ -1,6 +1,10 @@
 # Strathweb Phi Engine
 
-An cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally in an iOS app using [candle](https://github.com/huggingface/candle).
+An cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally using [candle](https://github.com/huggingface/candle).
+
+Supported platforms:
+ - iOS
+ - .NET (Windows x64 & arm64, Linux x64 & arm64, macOS arm64)
 
 ## Building instructions
 
@@ -32,10 +36,20 @@ For a detailed explanation of how this works, check out the blog post [here](htt
 
 ## Compatibility notes
 
-✅ Tested on Windows ARM64
-✅ Tested on Linux ARM64
+### .NET
+
+✅ Tested on Windows arm64
+
+✅ Tested on Linux arm64
+
+✅ Tested on MacOS arm64
+
+### iOS
+
 ✅ Tested on iPad Air M1 8GB RAM
+
 ✅ Should work on 6GB RAM iPhones too
+
 ❌ Will not work on 4GB RAM iPhones
 
 However, for 4GB RAM iPhones, it's possible to use the (very) low fidelity Q2_K quantized model. Such model is not included in the official Phi-3 release, but I tested [this one from HuggingFace](https://huggingface.co/SanctumAI/Phi-3-mini-4k-instruct-GGUF) on an iPhone 12 mini successfully.
@@ -46,7 +60,7 @@ This is the setup in the app:
  self.engine = try! PhiEngine(engineOptions: EngineOptions(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: nil, tokenizerRepo: nil, modelRepo: "SanctumAI/Phi-3-mini-4k-instruct-GGUF", modelFileName: "phi-3-mini-4k-instruct.Q2_K.gguf", modelRevision: "main"), eventHandler: ModelEventsHandler(parent: self))
 ```
 
-This variant requires the system instruction to be set differently too, as it recognizes the system token, so in other for the model to stop the inference correctly, this line in the Rust code:
+This variant requires the system instruction to be set differently too, as it recognizes the system token, so in other words, for the model to stop the inference correctly, this line in the Rust code:
 
 ```rust
 let prompt_with_history = format!("<|user|>\nYour overall instructions are: {}<|end|>\n<|assistant|>Understood, I will adhere to these instructions<|end|>{}\n<|assistant|>\n", self.system_instruction, history_prompt);
