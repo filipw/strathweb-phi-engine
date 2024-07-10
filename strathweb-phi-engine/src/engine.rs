@@ -132,10 +132,8 @@ pub struct InferenceResult {
 #[derive(Debug, Clone)]
 pub struct EngineOptions {
     pub cache_dir: String,
-    pub model_repo: Option<String>,
-    pub tokenizer_repo: Option<String>,
-    pub model_file_name: Option<String>,
-    pub model_revision: Option<String>,
+    pub model_provider: PhiModelProvider,
+    pub tokenizer_provider: TokenizerProvider,
     pub use_flash_attention: bool,
     pub system_instruction: Option<String>,
     pub context_window: Option<u16>,
@@ -183,38 +181,6 @@ impl PhiEngineBuilder {
         Ok(())
     }
 
-    pub fn with_model_repo(&self, model_repo: String) -> Result<(), PhiError> {
-        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
-            error_text: e.to_string(),
-        })?;
-        inner.model_repo = Some(model_repo);
-        Ok(())
-    }
-
-    pub fn with_tokenizer_repo(&self, tokenizer_repo: String) -> Result<(), PhiError> {
-        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
-            error_text: e.to_string(),
-        })?;
-        inner.tokenizer_repo = Some(tokenizer_repo);
-        Ok(())
-    }
-
-    pub fn with_model_file_name(&self, model_file_name: String) -> Result<(), PhiError> {
-        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
-            error_text: e.to_string(),
-        })?;
-        inner.model_file_name = Some(model_file_name);
-        Ok(())
-    }
-
-    pub fn with_model_revision(&self, model_revision: String) -> Result<(), PhiError> {
-        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
-            error_text: e.to_string(),
-        })?;
-        inner.model_revision = Some(model_revision);
-        Ok(())
-    }
-
     pub fn with_flash_attention(&self, use_flash_attention: bool) -> Result<(), PhiError> {
         let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
             error_text: e.to_string(),
@@ -223,32 +189,53 @@ impl PhiEngineBuilder {
         Ok(())
     }
 
-    pub fn build(&self, cache_dir: String, event_handler: Arc<BoxedPhiEventHandler>) -> Result<Arc<PhiEngine>, PhiError> {
+    pub fn with_event_handler(&self, event_handler: Arc<BoxedPhiEventHandler>) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.event_handler = Some(event_handler);
+        Ok(())
+    }
+
+    pub fn with_model_provider(&self, model_provider: PhiModelProvider) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.model_provider = model_provider;
+        Ok(())
+    }
+
+    pub fn with_tokenizer_provider(&self, tokenizer_provider: TokenizerProvider) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.tokenizer_provider = tokenizer_provider;
+        Ok(())
+    }
+
+    pub fn build(&self, cache_dir: String) -> Result<Arc<PhiEngine>, PhiError> {
         let inner = self.inner.lock().map_err(|e| PhiError::LockingError {
             error_text: e.to_string(),
         })?;
         let engine_options = EngineOptions {
             cache_dir: cache_dir,
-            model_repo: inner.model_repo.clone(),
-            tokenizer_repo: inner.tokenizer_repo.clone(),
-            model_file_name: inner.model_file_name.clone(),
-            model_revision: inner.model_revision.clone(),
+            model_provider: inner.model_provider.clone(),
+            tokenizer_provider: inner.tokenizer_provider.clone(),
             use_flash_attention: inner.use_flash_attention,
             system_instruction: inner.system_instruction.clone(),
             context_window: inner.context_window.clone(),
         };
-        PhiEngine::new(engine_options, event_handler).map(|engine| Arc::new(engine))
+        PhiEngine::new(engine_options, inner.event_handler.clone()).map(|engine| Arc::new(engine))
     }
 }
 
 struct PhiEngineBuilderInner {
     context_window: Option<u16>,
     system_instruction: Option<String>,
-    model_repo: Option<String>,
-    tokenizer_repo: Option<String>,
-    model_file_name: Option<String>,
-    model_revision: Option<String>,
+    tokenizer_provider: TokenizerProvider,
+    model_provider: PhiModelProvider,
     use_flash_attention: bool,
+    event_handler: Option<Arc<BoxedPhiEventHandler>>,
 }
 
 impl PhiEngineBuilderInner {
@@ -256,13 +243,31 @@ impl PhiEngineBuilderInner {
         Self {
             context_window: None,
             system_instruction: None,
-            model_repo: None,
-            tokenizer_repo: None,
-            model_file_name: None,
-            model_revision: None,
+            tokenizer_provider: TokenizerProvider::HuggingFace {
+                tokenizer_repo: "microsoft/Phi-3-mini-4k-instruct".to_string(),
+                tokenizer_file_name: "tokenizer.json".to_string(),
+            },
+            model_provider: PhiModelProvider::HuggingFace {
+                model_repo: "microsoft/Phi-3-mini-4k-instruct-gguf".to_string(),
+                model_file_name: "Phi-3-mini-4k-instruct-q4.gguf".to_string(),
+                model_revision: "main".to_string(),
+            },
+            event_handler: None,
             use_flash_attention: false,
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum PhiModelProvider {
+    HuggingFace { model_repo: String, model_file_name: String, model_revision: String },
+    FileSystem { model_path: String },
+}
+
+#[derive(Debug, Clone)]
+pub enum TokenizerProvider {
+    HuggingFace { tokenizer_repo: String, tokenizer_file_name: String },
+    FileSystem { tokenizer_path: String }
 }
 
 pub struct PhiEngine {
@@ -271,14 +276,14 @@ pub struct PhiEngine {
     pub device: Device,
     pub history: Mutex<VecDeque<HistoryEntry>>,
     pub system_instruction: String,
-    pub event_handler: Arc<BoxedPhiEventHandler>,
+    pub event_handler: Option<Arc<BoxedPhiEventHandler>>,
     pub context_window: u16,
 }
 
 impl PhiEngine {
     pub fn new(
         engine_options: EngineOptions,
-        event_handler: Arc<BoxedPhiEventHandler>,
+        event_handler: Option<Arc<BoxedPhiEventHandler>>,
     ) -> Result<Self, PhiError> {
         let start = std::time::Instant::now();
         // candle does not support Metal on iOS yet
@@ -286,60 +291,59 @@ impl PhiEngine {
         //let device = Device::new_metal(0).unwrap();
         let device = Device::Cpu;
 
+        let model_path = match engine_options.model_provider {
+            PhiModelProvider::HuggingFace { model_repo, model_file_name, model_revision } => {
+                let api_builder =
+                    ApiBuilder::new().with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
+                let api = api_builder
+                    .build()
+                    .map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
+                let repo = Repo::with_revision(
+                    model_repo.to_string(),
+                    hf_hub::RepoType::Model,
+                    model_revision,
+                );
+                let api = api.repo(repo);
+                let model_path = api.get(model_file_name.as_str())
+                    .map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
+                println!(" --> Downloaded model to {:?}...", model_path);
+                model_path
+            }
+            PhiModelProvider::FileSystem { model_path } => model_path.into(),
+        };
+
+        let tokenizer_path = match engine_options.tokenizer_provider {
+            TokenizerProvider::HuggingFace { tokenizer_repo, tokenizer_file_name } => {
+                let api_builder =
+                    ApiBuilder::new().with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
+                let api = api_builder
+                    .build()
+                    .map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
+                let repo = Repo::with_revision(
+                    tokenizer_repo.to_string(),
+                    hf_hub::RepoType::Model,
+                    "main".to_string(),
+                );
+                let api = api.repo(repo);
+                let tokenizer_path = api.get(tokenizer_file_name.as_str())
+                    .map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
+                println!(" --> Downloaded tokenizer to {:?}...", tokenizer_path);
+                tokenizer_path
+            }
+            TokenizerProvider::FileSystem { tokenizer_path } => tokenizer_path.into(),
+        };
+
         // defaults
-        let tokenizer_repo = engine_options
-            .tokenizer_repo
-            .unwrap_or("microsoft/Phi-3-mini-4k-instruct".to_string());
-        let model_repo = engine_options
-            .model_repo
-            .unwrap_or("microsoft/Phi-3-mini-4k-instruct-gguf".to_string());
-        let model_file_name = engine_options
-            .model_file_name
-            .unwrap_or("Phi-3-mini-4k-instruct-q4.gguf".to_string());
-        let model_revision = engine_options.model_revision.unwrap_or("main".to_string());
         let context_window = engine_options.context_window.unwrap_or(3800);
         let system_instruction = engine_options.system_instruction.unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
-
-        let api_builder =
-            ApiBuilder::new().with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
-        let api = api_builder
-            .build()
-            .map_err(|e| PhiError::InitalizationError {
-                error_text: e.to_string(),
-            })?;
-
-        let repo = Repo::with_revision(
-            model_repo.to_string(),
-            hf_hub::RepoType::Model,
-            model_revision,
-        );
-        let api = api.repo(repo);
-        let model_path =
-            api.get(model_file_name.as_str())
-                .map_err(|e| PhiError::InitalizationError {
-                    error_text: e.to_string(),
-                })?;
-        println!(" --> Downloaded model to {:?}...", model_path);
-
-        let api_builder =
-            ApiBuilder::new().with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
-        let api = api_builder
-            .build()
-            .map_err(|e| PhiError::InitalizationError {
-                error_text: e.to_string(),
-            })?;
-        let repo = Repo::with_revision(
-            tokenizer_repo.to_string(),
-            hf_hub::RepoType::Model,
-            "main".to_string(),
-        );
-        let api = api.repo(repo);
-        let tokenizer_path =
-            api.get("tokenizer.json")
-                .map_err(|e| PhiError::InitalizationError {
-                    error_text: e.to_string(),
-                })?;
-        println!(" --> Downloaded tokenizer to {:?}...", tokenizer_path);
 
         let mut file = File::open(&model_path).map_err(|e| PhiError::InitalizationError {
             error_text: e.to_string(),
@@ -362,13 +366,17 @@ impl PhiEngine {
                 error_text: e.to_string(),
             })?;
 
+        let event_handler_clone = event_handler.clone();
+
         println!(" --> Loaded the model in {:?}", start.elapsed());
-        event_handler
-            .handler
-            .on_model_loaded()
-            .map_err(|e| PhiError::InitalizationError {
-                error_text: e.to_string(),
-            })?;
+        if let Some(event_handler) = event_handler {
+            event_handler
+                .handler
+                .on_model_loaded()
+                .map_err(|e| PhiError::InitalizationError {
+                    error_text: e.to_string(),
+                })?;
+        }
 
         Ok(Self {
             model: model,
@@ -376,7 +384,7 @@ impl PhiEngine {
             device: device,
             history: Mutex::new(VecDeque::with_capacity(6)),
             system_instruction: system_instruction,
-            event_handler: event_handler,
+            event_handler: event_handler_clone,
             context_window: context_window,
         })
     }
@@ -475,7 +483,7 @@ struct TextGeneration {
     tokenizer: Tokenizer,
     logits_processor: LogitsProcessor,
     inference_options: InferenceOptions,
-    event_handler: Arc<BoxedPhiEventHandler>,
+    event_handler: Option<Arc<BoxedPhiEventHandler>>,
 }
 
 impl TextGeneration {
@@ -484,7 +492,7 @@ impl TextGeneration {
         tokenizer: Tokenizer,
         inference_options: &InferenceOptions,
         device: &Device,
-        event_handler: Arc<BoxedPhiEventHandler>,
+        event_handler: Option<Arc<BoxedPhiEventHandler>>,
     ) -> Self {
         let logits_processor = {
             let temperature = inference_options.temperature;
@@ -539,12 +547,14 @@ impl TextGeneration {
 
         all_tokens.push(next_token);
         if let Some(t) = tos.next_token(next_token)? {
-            self.event_handler
-                .handler
-                .on_inference_token(t)
-                .map_err(|e| PhiError::InferenceError {
-                    error_text: e.to_string(),
-                })?;
+            if let Some(event_handler) = &self.event_handler {
+                event_handler
+                    .handler
+                    .on_inference_token(t)
+                    .map_err(|e| PhiError::InferenceError {
+                        error_text: e.to_string(),
+                    })?;
+            }
         }
 
         let binding = self.tokenizer.get_vocab(true);
@@ -591,12 +601,14 @@ impl TextGeneration {
             }
 
             if let Some(t) = tos.next_token(next_token)? {
-                self.event_handler
-                    .handler
-                    .on_inference_token(t)
-                    .map_err(|e| PhiError::InferenceError {
-                        error_text: e.to_string(),
-                    })?;
+                if let Some(event_handler) = &self.event_handler {
+                    event_handler
+                        .handler
+                        .on_inference_token(t)
+                        .map_err(|e| PhiError::InferenceError {
+                            error_text: e.to_string(),
+                        })?;
+                }
             }
             sampled += 1;
         }

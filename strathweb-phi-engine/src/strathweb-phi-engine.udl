@@ -72,22 +72,31 @@ interface PhiEngineBuilder {
     void with_system_instruction(string system_instruction);
 
     [Throws=PhiError]
-    void with_model_repo(string model_repo);
-
-    [Throws=PhiError]
-    void with_tokenizer_repo(string tokenizer_repo);
-
-    [Throws=PhiError]
-    void with_model_file_name(string model_file_name);
-
-    [Throws=PhiError]
-    void with_model_revision(string model_revision);
-
-    [Throws=PhiError]
     void with_flash_attention(boolean use_flash_attention);
 
     [Throws=PhiError]
-    PhiEngine build(string cache_dir, BoxedPhiEventHandler event_handler);
+    void with_event_handler(BoxedPhiEventHandler event_handler);
+
+    [Throws=PhiError]
+    void with_model_provider(PhiModelProvider model_provider);
+
+    [Throws=PhiError]
+    void with_tokenizer_provider(TokenizerProvider tokenizer_provider);
+
+    [Throws=PhiError]
+    PhiEngine build(string cache_dir);
+};
+
+[Enum]
+interface PhiModelProvider {
+  HuggingFace(string model_repo, string model_file_name, string model_revision);
+  FileSystem(string model_path);
+};
+
+[Enum]
+interface TokenizerProvider {
+  HuggingFace(string tokenizer_repo, string tokenizer_file_name);
+  FileSystem(string tokenizer_path);
 };
 
 enum Role {

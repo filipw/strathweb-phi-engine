@@ -9,6 +9,9 @@ use crate::engine::PhiEngine;
 use crate::engine::PhiEventHandler;
 use crate::engine::Role;
 use crate::engine::HistoryEntry;
+use crate::engine::TokenizerProvider;
+use crate::engine::PhiModelProvider;
+
 use thiserror::Error;
 
 pub mod engine;
