@@ -3,6 +3,7 @@ uniffi::include_scaffolding!("strathweb-phi-engine");
 use crate::engine::BoxedPhiEventHandler;
 use crate::engine::PhiEngineBuilder;
 use crate::engine::InferenceOptions;
+use crate::engine::InferenceOptionsBuilder;
 use crate::engine::InferenceResult;
 use crate::engine::PhiEngine;
 use crate::engine::PhiEventHandler;

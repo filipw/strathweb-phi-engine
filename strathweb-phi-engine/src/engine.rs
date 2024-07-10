@@ -38,6 +38,89 @@ pub struct InferenceOptions {
     pub seed: u64,
 }
 
+pub struct InferenceOptionsBuilder {
+    inner: Mutex<InferenceOptions>,
+}
+
+impl InferenceOptionsBuilder {
+    pub fn new() -> Self {
+        Self {
+            inner: Mutex::new(InferenceOptions {
+                token_count: 128,
+                temperature: 0.7,
+                top_p: None,
+                top_k: None,
+                repeat_penalty: 1.0,
+                repeat_last_n: 64,
+                seed: 146628346,
+            }),
+        }
+    }
+
+    pub fn with_token_count(&self, token_count: u16) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.token_count = token_count;
+        Ok(())
+    }
+
+    pub fn with_temperature(&self, temperature: f64) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.temperature = temperature;
+        Ok(())
+    }
+
+    pub fn with_top_p(&self, top_p: f64) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.top_p = Some(top_p);
+        Ok(())
+    }
+
+    pub fn with_top_k(&self, top_k: u64) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.top_k = Some(top_k);
+        Ok(())
+    }
+
+    pub fn with_repeat_penalty(&self, repeat_penalty: f32) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.repeat_penalty = repeat_penalty;
+        Ok(())
+    }
+
+    pub fn with_repeat_last_n(&self, repeat_last_n: u16) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.repeat_last_n = repeat_last_n;
+        Ok(())
+    }
+
+    pub fn with_seed(&self, seed: u64) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.seed = seed;
+        Ok(())
+    }
+
+    pub fn build(&self) -> Result<InferenceOptions, PhiError> {
+        let inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        Ok(inner.clone())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct InferenceResult {
     pub token_count: u16,
@@ -78,7 +161,6 @@ pub struct PhiEngineBuilder {
 }
 
 impl PhiEngineBuilder {
-
     pub fn new() -> Self {
         Self {
             inner: Mutex::new(PhiEngineBuilderInner::new())

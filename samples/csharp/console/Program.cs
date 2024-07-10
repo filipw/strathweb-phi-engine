@@ -1,13 +1,9 @@
 ﻿using uniffi.strathweb_phi_engine;
 
-var inferenceOptions = new InferenceOptions(
-    tokenCount: 100, 
-    temperature: 0.9, 
-    topP: null, 
-    topK: null, 
-    repeatPenalty: 1.0f, 
-    repeatLastN: 64, 
-    seed: 146628346);
+var inferenceOptionsBuilder = new InferenceOptionsBuilder();
+inferenceOptionsBuilder.WithTemperature(0.9);
+inferenceOptionsBuilder.WithTokenCount(100);
+var inferenceOptions = inferenceOptionsBuilder.Build();
 
 var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), ".cache");
 
