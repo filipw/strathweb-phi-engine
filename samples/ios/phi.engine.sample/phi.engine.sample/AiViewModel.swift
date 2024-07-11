@@ -9,19 +9,30 @@ import Foundation
 
 class Phi3ViewModel: ObservableObject {
     var engine: PhiEngine?
-    let inferenceOptions: InferenceOptions = InferenceOptions(tokenCount: 100, temperature: 0.7, topP: nil, topK: nil, repeatPenalty: 1.0, repeatLastN: 64, seed: 146628346)
+    let inferenceOptions: InferenceOptions
     @Published var isLoading: Bool = false
     @Published var isLoadingEngine: Bool = false
     @Published var messages: [ChatMessage] = []
     @Published var prompt: String = ""
     @Published var isReady: Bool = false
     
+    init() {
+        let inferenceOptionsBuilder = InferenceOptionsBuilder()
+        try! inferenceOptionsBuilder.withTemperature(temperature: 0.9)
+        try! inferenceOptionsBuilder.withSeed(seed: 146628346)
+        self.inferenceOptions = try! inferenceOptionsBuilder.build()
+    }
+    
     func loadModel() async {
         DispatchQueue.main.async {
             self.isLoadingEngine = true
         }
         
-        self.engine = try! PhiEngine(engineOptions: EngineOptions(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: nil, tokenizerRepo: nil, modelRepo: nil, modelFileName: nil, modelRevision: nil, useFlashAttention: false, contextWindow: nil), eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler(parent: self)))
+        let engineBuilder = PhiEngineBuilder()
+        try! engineBuilder.withSystemInstruction(systemInstruction: "You are a hockey poet")
+        try! engineBuilder.withEventHandler(eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler(parent: self)))
+        
+        self.engine = try! engineBuilder.build(cacheDir: FileManager.default.temporaryDirectory.path())
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true

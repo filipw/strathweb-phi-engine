@@ -1,18 +1,16 @@
 use anyhow::{Error as E, Result};
 use candle_core::quantized::gguf_file;
-use candle_core::{Device, Tensor};
-use candle_transformers::generation::{LogitsProcessor, Sampling};
+use candle_core::Device;
 use candle_transformers::models::quantized_phi3::ModelWeights as Phi3;
 use hf_hub::api::sync::ApiBuilder;
 use hf_hub::Repo;
 use std::collections::VecDeque;
 use std::fs::File;
-use std::io::Write;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tokenizers::Tokenizer;
 
-use crate::token_stream::TokenOutputStream;
+use crate::text_generator::TextGenerator;
 use crate::PhiError;
 
 #[derive(Debug, Clone)]
@@ -38,6 +36,89 @@ pub struct InferenceOptions {
     pub seed: u64,
 }
 
+pub struct InferenceOptionsBuilder {
+    inner: Mutex<InferenceOptions>,
+}
+
+impl InferenceOptionsBuilder {
+    pub fn new() -> Self {
+        Self {
+            inner: Mutex::new(InferenceOptions {
+                token_count: 128,
+                temperature: 0.7,
+                top_p: None,
+                top_k: None,
+                repeat_penalty: 1.0,
+                repeat_last_n: 64,
+                seed: 146628346,
+            }),
+        }
+    }
+
+    pub fn with_token_count(&self, token_count: u16) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.token_count = token_count;
+        Ok(())
+    }
+
+    pub fn with_temperature(&self, temperature: f64) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.temperature = temperature;
+        Ok(())
+    }
+
+    pub fn with_top_p(&self, top_p: f64) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.top_p = Some(top_p);
+        Ok(())
+    }
+
+    pub fn with_top_k(&self, top_k: u64) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.top_k = Some(top_k);
+        Ok(())
+    }
+
+    pub fn with_repeat_penalty(&self, repeat_penalty: f32) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.repeat_penalty = repeat_penalty;
+        Ok(())
+    }
+
+    pub fn with_repeat_last_n(&self, repeat_last_n: u16) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.repeat_last_n = repeat_last_n;
+        Ok(())
+    }
+
+    pub fn with_seed(&self, seed: u64) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.seed = seed;
+        Ok(())
+    }
+
+    pub fn build(&self) -> Result<InferenceOptions, PhiError> {
+        let inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        Ok(inner.clone())
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct InferenceResult {
     pub token_count: u16,
@@ -49,10 +130,8 @@ pub struct InferenceResult {
 #[derive(Debug, Clone)]
 pub struct EngineOptions {
     pub cache_dir: String,
-    pub model_repo: Option<String>,
-    pub tokenizer_repo: Option<String>,
-    pub model_file_name: Option<String>,
-    pub model_revision: Option<String>,
+    pub model_provider: PhiModelProvider,
+    pub tokenizer_provider: TokenizerProvider,
     pub use_flash_attention: bool,
     pub system_instruction: Option<String>,
     pub context_window: Option<u16>,
@@ -73,20 +152,136 @@ impl BoxedPhiEventHandler {
     }
 }
 
+pub struct PhiEngineBuilder {
+    inner: Mutex<PhiEngineBuilderInner>
+}
+
+impl PhiEngineBuilder {
+    pub fn new() -> Self {
+        Self {
+            inner: Mutex::new(PhiEngineBuilderInner::new())
+        }
+    }
+    
+    pub fn with_context_window(&self, context_window: u16) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.context_window = Some(context_window);
+        Ok(())
+    }
+
+    pub fn with_system_instruction(&self, system_instruction: String) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.system_instruction = Some(system_instruction);
+        Ok(())
+    }
+
+    pub fn with_flash_attention(&self, use_flash_attention: bool) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.use_flash_attention = use_flash_attention;
+        Ok(())
+    }
+
+    pub fn with_event_handler(&self, event_handler: Arc<BoxedPhiEventHandler>) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.event_handler = Some(event_handler);
+        Ok(())
+    }
+
+    pub fn with_model_provider(&self, model_provider: PhiModelProvider) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.model_provider = model_provider;
+        Ok(())
+    }
+
+    pub fn with_tokenizer_provider(&self, tokenizer_provider: TokenizerProvider) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.tokenizer_provider = tokenizer_provider;
+        Ok(())
+    }
+
+    pub fn build(&self, cache_dir: String) -> Result<Arc<PhiEngine>, PhiError> {
+        let inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        let engine_options = EngineOptions {
+            cache_dir: cache_dir,
+            model_provider: inner.model_provider.clone(),
+            tokenizer_provider: inner.tokenizer_provider.clone(),
+            use_flash_attention: inner.use_flash_attention,
+            system_instruction: inner.system_instruction.clone(),
+            context_window: inner.context_window.clone(),
+        };
+        PhiEngine::new(engine_options, inner.event_handler.clone()).map(|engine| Arc::new(engine))
+    }
+}
+
+struct PhiEngineBuilderInner {
+    context_window: Option<u16>,
+    system_instruction: Option<String>,
+    tokenizer_provider: TokenizerProvider,
+    model_provider: PhiModelProvider,
+    use_flash_attention: bool,
+    event_handler: Option<Arc<BoxedPhiEventHandler>>,
+}
+
+impl PhiEngineBuilderInner {
+    fn new() -> Self {
+        Self {
+            context_window: None,
+            system_instruction: None,
+            tokenizer_provider: TokenizerProvider::HuggingFace {
+                tokenizer_repo: "microsoft/Phi-3-mini-4k-instruct".to_string(),
+                tokenizer_file_name: "tokenizer.json".to_string(),
+            },
+            model_provider: PhiModelProvider::HuggingFace {
+                model_repo: "microsoft/Phi-3-mini-4k-instruct-gguf".to_string(),
+                model_file_name: "Phi-3-mini-4k-instruct-q4.gguf".to_string(),
+                model_revision: "main".to_string(),
+            },
+            event_handler: None,
+            use_flash_attention: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum PhiModelProvider {
+    HuggingFace { model_repo: String, model_file_name: String, model_revision: String },
+    FileSystem { model_path: String },
+}
+
+#[derive(Debug, Clone)]
+pub enum TokenizerProvider {
+    HuggingFace { tokenizer_repo: String, tokenizer_file_name: String },
+    FileSystem { tokenizer_path: String }
+}
+
 pub struct PhiEngine {
     pub model: Phi3,
     pub tokenizer: Tokenizer,
     pub device: Device,
     pub history: Mutex<VecDeque<HistoryEntry>>,
     pub system_instruction: String,
-    pub event_handler: Arc<BoxedPhiEventHandler>,
+    pub event_handler: Option<Arc<BoxedPhiEventHandler>>,
     pub context_window: u16,
 }
 
 impl PhiEngine {
     pub fn new(
         engine_options: EngineOptions,
-        event_handler: Arc<BoxedPhiEventHandler>,
+        event_handler: Option<Arc<BoxedPhiEventHandler>>,
     ) -> Result<Self, PhiError> {
         let start = std::time::Instant::now();
         // candle does not support Metal on iOS yet
@@ -94,60 +289,59 @@ impl PhiEngine {
         //let device = Device::new_metal(0).unwrap();
         let device = Device::Cpu;
 
+        let model_path = match engine_options.model_provider {
+            PhiModelProvider::HuggingFace { model_repo, model_file_name, model_revision } => {
+                let api_builder =
+                    ApiBuilder::new().with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
+                let api = api_builder
+                    .build()
+                    .map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
+                let repo = Repo::with_revision(
+                    model_repo.to_string(),
+                    hf_hub::RepoType::Model,
+                    model_revision,
+                );
+                let api = api.repo(repo);
+                let model_path = api.get(model_file_name.as_str())
+                    .map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
+                println!(" --> Downloaded model to {:?}...", model_path);
+                model_path
+            }
+            PhiModelProvider::FileSystem { model_path } => model_path.into(),
+        };
+
+        let tokenizer_path = match engine_options.tokenizer_provider {
+            TokenizerProvider::HuggingFace { tokenizer_repo, tokenizer_file_name } => {
+                let api_builder =
+                    ApiBuilder::new().with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
+                let api = api_builder
+                    .build()
+                    .map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
+                let repo = Repo::with_revision(
+                    tokenizer_repo.to_string(),
+                    hf_hub::RepoType::Model,
+                    "main".to_string(),
+                );
+                let api = api.repo(repo);
+                let tokenizer_path = api.get(tokenizer_file_name.as_str())
+                    .map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
+                println!(" --> Downloaded tokenizer to {:?}...", tokenizer_path);
+                tokenizer_path
+            }
+            TokenizerProvider::FileSystem { tokenizer_path } => tokenizer_path.into(),
+        };
+
         // defaults
-        let tokenizer_repo = engine_options
-            .tokenizer_repo
-            .unwrap_or("microsoft/Phi-3-mini-4k-instruct".to_string());
-        let model_repo = engine_options
-            .model_repo
-            .unwrap_or("microsoft/Phi-3-mini-4k-instruct-gguf".to_string());
-        let model_file_name = engine_options
-            .model_file_name
-            .unwrap_or("Phi-3-mini-4k-instruct-q4.gguf".to_string());
-        let model_revision = engine_options.model_revision.unwrap_or("main".to_string());
         let context_window = engine_options.context_window.unwrap_or(3800);
         let system_instruction = engine_options.system_instruction.unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
-
-        let api_builder =
-            ApiBuilder::new().with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
-        let api = api_builder
-            .build()
-            .map_err(|e| PhiError::InitalizationError {
-                error_text: e.to_string(),
-            })?;
-
-        let repo = Repo::with_revision(
-            model_repo.to_string(),
-            hf_hub::RepoType::Model,
-            model_revision,
-        );
-        let api = api.repo(repo);
-        let model_path =
-            api.get(model_file_name.as_str())
-                .map_err(|e| PhiError::InitalizationError {
-                    error_text: e.to_string(),
-                })?;
-        println!(" --> Downloaded model to {:?}...", model_path);
-
-        let api_builder =
-            ApiBuilder::new().with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
-        let api = api_builder
-            .build()
-            .map_err(|e| PhiError::InitalizationError {
-                error_text: e.to_string(),
-            })?;
-        let repo = Repo::with_revision(
-            tokenizer_repo.to_string(),
-            hf_hub::RepoType::Model,
-            "main".to_string(),
-        );
-        let api = api.repo(repo);
-        let tokenizer_path =
-            api.get("tokenizer.json")
-                .map_err(|e| PhiError::InitalizationError {
-                    error_text: e.to_string(),
-                })?;
-        println!(" --> Downloaded tokenizer to {:?}...", tokenizer_path);
 
         let mut file = File::open(&model_path).map_err(|e| PhiError::InitalizationError {
             error_text: e.to_string(),
@@ -170,13 +364,17 @@ impl PhiEngine {
                 error_text: e.to_string(),
             })?;
 
+        let event_handler_clone = event_handler.clone();
+
         println!(" --> Loaded the model in {:?}", start.elapsed());
-        event_handler
-            .handler
-            .on_model_loaded()
-            .map_err(|e| PhiError::InitalizationError {
-                error_text: e.to_string(),
-            })?;
+        if let Some(event_handler) = event_handler {
+            event_handler
+                .handler
+                .on_model_loaded()
+                .map_err(|e| PhiError::InitalizationError {
+                    error_text: e.to_string(),
+                })?;
+        }
 
         Ok(Self {
             model: model,
@@ -184,7 +382,7 @@ impl PhiEngine {
             device: device,
             history: Mutex::new(VecDeque::with_capacity(6)),
             system_instruction: system_instruction,
-            event_handler: event_handler,
+            event_handler: event_handler_clone,
             context_window: context_window,
         })
     }
@@ -218,7 +416,7 @@ impl PhiEngine {
         // Phi-3 has no system prompt so we inject it as a user prompt
         let prompt_with_history = format!("<|user|>\nYour overall instructions are: {}<|end|>\n<|assistant|>Understood, I will adhere to these instructions<|end|>{}\n<|assistant|>\n", self.system_instruction, history_prompt);
 
-        let mut pipeline = TextGeneration::new(
+        let mut pipeline = TextGenerator::new(
             &self.model,
             self.tokenizer.clone(),
             inference_options,
@@ -274,148 +472,5 @@ impl PhiEngine {
                 token_count -= self.count_tokens(&front.text);
             }
         }
-    }
-}
-
-struct TextGeneration {
-    model: Phi3,
-    device: Device,
-    tokenizer: Tokenizer,
-    logits_processor: LogitsProcessor,
-    inference_options: InferenceOptions,
-    event_handler: Arc<BoxedPhiEventHandler>,
-}
-
-impl TextGeneration {
-    fn new(
-        model: &Phi3,
-        tokenizer: Tokenizer,
-        inference_options: &InferenceOptions,
-        device: &Device,
-        event_handler: Arc<BoxedPhiEventHandler>,
-    ) -> Self {
-        let logits_processor = {
-            let temperature = inference_options.temperature;
-            let sampling = if temperature <= 0. {
-                Sampling::ArgMax
-            } else {
-                match (inference_options.top_k, inference_options.top_p) {
-                    (None, None) => Sampling::All { temperature },
-                    (Some(k), None) => Sampling::TopK {
-                        k: usize::try_from(k).unwrap_or(0),
-                        temperature,
-                    },
-                    (None, Some(p)) => Sampling::TopP { p, temperature },
-                    (Some(k), Some(p)) => Sampling::TopKThenTopP {
-                        k: usize::try_from(k).unwrap_or(0),
-                        p,
-                        temperature,
-                    },
-                }
-            };
-            LogitsProcessor::from_sampling(inference_options.seed, sampling)
-        };
-        Self {
-            model: model.clone(),
-            tokenizer,
-            logits_processor,
-            inference_options: inference_options.clone(),
-            device: device.clone(),
-            event_handler: event_handler,
-        }
-    }
-
-    // inference code adapted from https://github.com/huggingface/candle/blob/main/candle-examples/examples/quantized/main.rs
-    fn run(&mut self, prompt: &str, sample_len: u16) -> Result<InferenceResult> {
-        //println!("{}", prompt);
-
-        let mut tos = TokenOutputStream::new(self.tokenizer.clone());
-        let tokens = tos.tokenizer().encode(prompt, true).map_err(E::msg)?;
-        let tokens = tokens.get_ids();
-
-        let mut all_tokens = vec![];
-        let mut next_token = {
-            let mut next_token = 0;
-            for (pos, token) in tokens.iter().enumerate() {
-                let input = Tensor::new(&[*token], &self.device)?.unsqueeze(0)?;
-                let logits = self.model.forward(&input, pos)?;
-                let logits = logits.squeeze(0)?;
-                next_token = self.logits_processor.sample(&logits)?;
-            }
-            next_token
-        };
-
-        all_tokens.push(next_token);
-        if let Some(t) = tos.next_token(next_token)? {
-            self.event_handler
-                .handler
-                .on_inference_token(t)
-                .map_err(|e| PhiError::InferenceError {
-                    error_text: e.to_string(),
-                })?;
-        }
-
-        let binding = self.tokenizer.get_vocab(true);
-        let endoftext_token = binding
-            .get("<|endoftext|>")
-            .ok_or_else(|| anyhow::Error::msg("No <|endoftext|> found"))?;
-        let end_token = binding
-            .get("<|end|>")
-            .ok_or_else(|| anyhow::Error::msg("No <|end|> found"))?;
-        let assistant_token = binding
-            .get("<|assistant|>")
-            .ok_or_else(|| anyhow::Error::msg("No <|assistant|> found"))?;
-
-        let start_post_prompt = std::time::Instant::now();
-        let mut sampled = 0;
-        let to_sample = sample_len.saturating_sub(1) as usize;
-        for index in 0..to_sample {
-            let input = Tensor::new(&[next_token], &self.device)?.unsqueeze(0)?;
-            let logits = self.model.forward(&input, tokens.len() + index)?;
-            let logits = logits.squeeze(0)?;
-            let logits = if self.inference_options.repeat_penalty == 1.0 {
-                logits
-            } else {
-                let start_at = all_tokens
-                    .len()
-                    .saturating_sub(self.inference_options.repeat_last_n.into());
-                candle_transformers::utils::apply_repeat_penalty(
-                    &logits,
-                    self.inference_options.repeat_penalty,
-                    &all_tokens[start_at..],
-                )?
-            };
-
-            next_token = self.logits_processor.sample(&logits)?;
-            all_tokens.push(next_token);
-
-            if &next_token == endoftext_token
-                || &next_token == end_token
-                || &next_token == assistant_token
-            {
-                println!("\n\nBreaking due to end token: ${:?}$", next_token);
-                std::io::stdout().flush()?;
-                break;
-            }
-
-            if let Some(t) = tos.next_token(next_token)? {
-                self.event_handler
-                    .handler
-                    .on_inference_token(t)
-                    .map_err(|e| PhiError::InferenceError {
-                        error_text: e.to_string(),
-                    })?;
-            }
-            sampled += 1;
-        }
-
-        let dt = start_post_prompt.elapsed();
-        let inference_result = InferenceResult {
-            token_count: sampled,
-            result_text: tos.decode_all().map_err(E::msg)?,
-            duration: dt.as_secs_f64(),
-            tokens_per_second: sampled as f64 / dt.as_secs_f64(),
-        };
-        Ok(inference_result)
     }
 }
