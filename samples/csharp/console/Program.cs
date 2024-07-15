@@ -1,5 +1,7 @@
 ﻿using uniffi.strathweb_phi_engine;
 
+StrathwebPhiEngineMethods.EnableTracing();
+
 var inferenceOptionsBuilder = new InferenceOptionsBuilder();
 inferenceOptionsBuilder.WithTemperature(0.9);
 inferenceOptionsBuilder.WithTokenCount(100);
