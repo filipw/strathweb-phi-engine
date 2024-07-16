@@ -17,6 +17,8 @@ use crate::engine::PhiModelProvider;
 
 use once_cell::sync::Lazy;
 use thiserror::Error;
+use tracing::Level;
+use tracing_subscriber::{filter::FilterFn, prelude::*};
 
 pub mod engine;
 pub mod token_stream;
@@ -26,11 +28,17 @@ static TRACING_INITIALIZED: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(fals
 
 pub fn enable_tracing() {
     if TRACING_INITIALIZED.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_ok() {
-        tracing_subscriber::fmt()
-            .with_max_level(tracing::Level::DEBUG)
+        // mute the annoying warnings https://github.com/huggingface/tokenizers/issues/1366
+        let filter = FilterFn::new(|metadata|
+            metadata.level() <= &Level::DEBUG && 
+            !metadata.target().starts_with("tokenizers::tokenizer::serialization")
+        );
+        let layer = tracing_subscriber::fmt::layer()
             .with_level(true)
             .pretty()
-            .init();
+            .with_filter(filter);
+
+        tracing_subscriber::registry().with(layer).init();
     }
 }
 
