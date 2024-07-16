@@ -81,12 +81,11 @@ impl TextGenerator {
         all_tokens.push(next_token);
         if let Some(t) = tos.next_token(next_token)? {
             if let Some(event_handler) = &self.event_handler {
-                event_handler
-                    .handler
-                    .on_inference_token(t)
-                    .map_err(|e| PhiError::InferenceError {
+                event_handler.handler.on_inference_token(t).map_err(|e| {
+                    PhiError::InferenceError {
                         error_text: e.to_string(),
-                    })?;
+                    }
+                })?;
             }
         }
 
@@ -135,12 +134,11 @@ impl TextGenerator {
 
             if let Some(t) = tos.next_token(next_token)? {
                 if let Some(event_handler) = &self.event_handler {
-                    event_handler
-                        .handler
-                        .on_inference_token(t)
-                        .map_err(|e| PhiError::InferenceError {
+                    event_handler.handler.on_inference_token(t).map_err(|e| {
+                        PhiError::InferenceError {
                             error_text: e.to_string(),
-                        })?;
+                        }
+                    })?;
                 }
             }
             sampled += 1;

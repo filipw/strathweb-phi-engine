@@ -4,7 +4,6 @@ use candle_core::Device;
 use candle_transformers::models::quantized_phi3::ModelWeights as Phi3;
 use hf_hub::api::sync::ApiBuilder;
 use hf_hub::Repo;
-use std::collections::VecDeque;
 use std::fs::File;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -15,7 +14,7 @@ use crate::text_generator::TextGenerator;
 use crate::PhiError;
 
 #[derive(Debug, Clone)]
-pub struct HistoryEntry {
+pub struct ConversationMessage {
     pub role: Role,
     pub text: String,
 }
@@ -134,7 +133,6 @@ pub struct EngineOptions {
     pub model_provider: PhiModelProvider,
     pub tokenizer_provider: TokenizerProvider,
     pub use_flash_attention: bool,
-    pub system_instruction: Option<String>,
     pub context_window: Option<u16>,
 }
 
@@ -154,29 +152,21 @@ impl BoxedPhiEventHandler {
 }
 
 pub struct PhiEngineBuilder {
-    inner: Mutex<PhiEngineBuilderInner>
+    inner: Mutex<PhiEngineBuilderInner>,
 }
 
 impl PhiEngineBuilder {
     pub fn new() -> Self {
         Self {
-            inner: Mutex::new(PhiEngineBuilderInner::new())
+            inner: Mutex::new(PhiEngineBuilderInner::new()),
         }
     }
-    
+
     pub fn with_context_window(&self, context_window: u16) -> Result<(), PhiError> {
         let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
             error_text: e.to_string(),
         })?;
         inner.context_window = Some(context_window);
-        Ok(())
-    }
-
-    pub fn with_system_instruction(&self, system_instruction: String) -> Result<(), PhiError> {
-        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
-            error_text: e.to_string(),
-        })?;
-        inner.system_instruction = Some(system_instruction);
         Ok(())
     }
 
@@ -188,7 +178,10 @@ impl PhiEngineBuilder {
         Ok(())
     }
 
-    pub fn with_event_handler(&self, event_handler: Arc<BoxedPhiEventHandler>) -> Result<(), PhiError> {
+    pub fn with_event_handler(
+        &self,
+        event_handler: Arc<BoxedPhiEventHandler>,
+    ) -> Result<(), PhiError> {
         let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
             error_text: e.to_string(),
         })?;
@@ -204,7 +197,10 @@ impl PhiEngineBuilder {
         Ok(())
     }
 
-    pub fn with_tokenizer_provider(&self, tokenizer_provider: TokenizerProvider) -> Result<(), PhiError> {
+    pub fn with_tokenizer_provider(
+        &self,
+        tokenizer_provider: TokenizerProvider,
+    ) -> Result<(), PhiError> {
         let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
             error_text: e.to_string(),
         })?;
@@ -221,16 +217,42 @@ impl PhiEngineBuilder {
             model_provider: inner.model_provider.clone(),
             tokenizer_provider: inner.tokenizer_provider.clone(),
             use_flash_attention: inner.use_flash_attention,
-            system_instruction: inner.system_instruction.clone(),
             context_window: inner.context_window.clone(),
         };
         PhiEngine::new(engine_options, inner.event_handler.clone()).map(|engine| Arc::new(engine))
+    }
+
+    pub fn build_stateful(
+        &self,
+        cache_dir: String,
+        system_instruction: Option<String>,
+    ) -> Result<Arc<StatefulPhiEngine>, PhiError> {
+        let inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        let engine_options = EngineOptions {
+            cache_dir: cache_dir,
+            model_provider: inner.model_provider.clone(),
+            tokenizer_provider: inner.tokenizer_provider.clone(),
+            use_flash_attention: inner.use_flash_attention,
+            context_window: inner.context_window.clone(),
+        };
+
+        let conversation_state: ConversationState = ConversationState {
+            system_instruction: system_instruction,
+            messages: Vec::new(),
+        };
+
+        let engine = PhiEngine::new(engine_options, inner.event_handler.clone())?;
+        Ok(Arc::new(StatefulPhiEngine {
+            engine: engine,
+            conversation_state: Mutex::new(conversation_state),
+        }))
     }
 }
 
 struct PhiEngineBuilderInner {
     context_window: Option<u16>,
-    system_instruction: Option<String>,
     tokenizer_provider: TokenizerProvider,
     model_provider: PhiModelProvider,
     use_flash_attention: bool,
@@ -241,7 +263,6 @@ impl PhiEngineBuilderInner {
     fn new() -> Self {
         Self {
             context_window: None,
-            system_instruction: None,
             tokenizer_provider: TokenizerProvider::HuggingFace {
                 tokenizer_repo: "microsoft/Phi-3-mini-4k-instruct".to_string(),
                 tokenizer_file_name: "tokenizer.json".to_string(),
@@ -259,22 +280,88 @@ impl PhiEngineBuilderInner {
 
 #[derive(Debug, Clone)]
 pub enum PhiModelProvider {
-    HuggingFace { model_repo: String, model_file_name: String, model_revision: String },
-    FileSystem { model_path: String },
+    HuggingFace {
+        model_repo: String,
+        model_file_name: String,
+        model_revision: String,
+    },
+    FileSystem {
+        model_path: String,
+    },
 }
 
 #[derive(Debug, Clone)]
 pub enum TokenizerProvider {
-    HuggingFace { tokenizer_repo: String, tokenizer_file_name: String },
-    FileSystem { tokenizer_path: String }
+    HuggingFace {
+        tokenizer_repo: String,
+        tokenizer_file_name: String,
+    },
+    FileSystem {
+        tokenizer_path: String,
+    },
+}
+
+#[derive(Debug, Clone)]
+pub struct ConversationState {
+    pub system_instruction: Option<String>,
+    pub messages: Vec<ConversationMessage>,
+}
+
+pub struct StatefulPhiEngine {
+    pub engine: PhiEngine,
+    pub conversation_state: Mutex<ConversationState>,
+}
+
+impl StatefulPhiEngine {
+    pub fn run_inference(
+        &self,
+        prompt_text: String,
+        inference_options: &InferenceOptions,
+    ) -> Result<InferenceResult, PhiError> {
+        let mut conversation_state =
+            self.conversation_state
+                .lock()
+                .map_err(|e| PhiError::LockingError {
+                    error_text: e.to_string(),
+                })?;
+        let result = self.engine
+            .run_inference(prompt_text, conversation_state.clone(), inference_options).map_err(|e| PhiError::InferenceError {
+                error_text: e.to_string(),
+            })?;
+
+        conversation_state.messages.push(ConversationMessage {
+            role: Role::Assistant,
+            text: result.result_text.clone(),
+        });
+        Ok(result)
+    }
+
+    pub fn clear_messsages(&self) -> Result<(), PhiError> {
+        let mut conversation_state =
+            self.conversation_state
+                .lock()
+                .map_err(|e| PhiError::LockingError {
+                    error_text: e.to_string(),
+                })?;
+        conversation_state.messages.clear();
+        Ok(())
+    }
+
+    pub fn get_history(&self) -> Result<Vec<ConversationMessage>, PhiError> {
+        let conversation_state =
+            self.conversation_state
+                .lock()
+                .map_err(|e| PhiError::LockingError {
+                    error_text: e.to_string(),
+                })?;
+        Ok(conversation_state.messages.clone())
+    }
 }
 
 pub struct PhiEngine {
     pub model: Phi3,
     pub tokenizer: Tokenizer,
     pub device: Device,
-    pub history: Mutex<VecDeque<HistoryEntry>>,
-    pub system_instruction: String,
     pub event_handler: Option<Arc<BoxedPhiEventHandler>>,
     pub context_window: u16,
 }
@@ -291,9 +378,13 @@ impl PhiEngine {
         let device = Device::Cpu;
 
         let model_path = match engine_options.model_provider {
-            PhiModelProvider::HuggingFace { model_repo, model_file_name, model_revision } => {
-                let api_builder =
-                    ApiBuilder::new().with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
+            PhiModelProvider::HuggingFace {
+                model_repo,
+                model_file_name,
+                model_revision,
+            } => {
+                let api_builder = ApiBuilder::new()
+                    .with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
                 let api = api_builder
                     .build()
                     .map_err(|e| PhiError::InitalizationError {
@@ -305,10 +396,11 @@ impl PhiEngine {
                     model_revision,
                 );
                 let api = api.repo(repo);
-                let model_path = api.get(model_file_name.as_str())
-                    .map_err(|e| PhiError::InitalizationError {
+                let model_path = api.get(model_file_name.as_str()).map_err(|e| {
+                    PhiError::InitalizationError {
                         error_text: e.to_string(),
-                    })?;
+                    }
+                })?;
                 debug!(" --> Downloaded model to {:?}...", model_path);
                 model_path
             }
@@ -316,9 +408,12 @@ impl PhiEngine {
         };
 
         let tokenizer_path = match engine_options.tokenizer_provider {
-            TokenizerProvider::HuggingFace { tokenizer_repo, tokenizer_file_name } => {
-                let api_builder =
-                    ApiBuilder::new().with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
+            TokenizerProvider::HuggingFace {
+                tokenizer_repo,
+                tokenizer_file_name,
+            } => {
+                let api_builder = ApiBuilder::new()
+                    .with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
                 let api = api_builder
                     .build()
                     .map_err(|e| PhiError::InitalizationError {
@@ -330,10 +425,11 @@ impl PhiEngine {
                     "main".to_string(),
                 );
                 let api = api.repo(repo);
-                let tokenizer_path = api.get(tokenizer_file_name.as_str())
-                    .map_err(|e| PhiError::InitalizationError {
+                let tokenizer_path = api.get(tokenizer_file_name.as_str()).map_err(|e| {
+                    PhiError::InitalizationError {
                         error_text: e.to_string(),
-                    })?;
+                    }
+                })?;
                 debug!(" --> Downloaded tokenizer to {:?}...", tokenizer_path);
                 tokenizer_path
             }
@@ -342,7 +438,6 @@ impl PhiEngine {
 
         // defaults
         let context_window = engine_options.context_window.unwrap_or(3800);
-        let system_instruction = engine_options.system_instruction.unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
 
         let mut file = File::open(&model_path).map_err(|e| PhiError::InitalizationError {
             error_text: e.to_string(),
@@ -381,8 +476,6 @@ impl PhiEngine {
             model: model,
             tokenizer: tokenizer,
             device: device,
-            history: Mutex::new(VecDeque::with_capacity(6)),
-            system_instruction: system_instruction,
             event_handler: event_handler_clone,
             context_window: context_window,
         })
@@ -391,14 +484,12 @@ impl PhiEngine {
     pub fn run_inference(
         &self,
         prompt_text: String,
+        conversation_state: ConversationState,
         inference_options: &InferenceOptions,
     ) -> Result<InferenceResult, PhiError> {
-        let mut history = self.history.lock().map_err(|e| PhiError::HistoryError {
-            error_text: e.to_string(),
-        })?;
-
+        let mut history = conversation_state.messages.clone();
         self.trim_history_to_token_limit(&mut history, self.context_window);
-        history.push_back(HistoryEntry {
+        history.push(ConversationMessage {
             role: Role::User,
             text: prompt_text.clone(),
         });
@@ -414,8 +505,10 @@ impl PhiEngine {
             })
             .collect::<String>();
 
+        let system_instruction = conversation_state.system_instruction.unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
+
         // Phi-3 has no system prompt so we inject it as a user prompt
-        let prompt_with_history = format!("<|user|>\nYour overall instructions are: {}<|end|>\n<|assistant|>Understood, I will adhere to these instructions<|end|>{}\n<|assistant|>\n", self.system_instruction, history_prompt);
+        let prompt_with_history = format!("<|user|>\nYour overall instructions are: {}<|end|>\n<|assistant|>Understood, I will adhere to these instructions<|end|>{}\n<|assistant|>\n", system_instruction, history_prompt);
 
         let mut pipeline = TextGenerator::new(
             &self.model,
@@ -431,27 +524,7 @@ impl PhiEngine {
                 error_text: e.to_string(),
             })?;
 
-        history.push_back(HistoryEntry {
-            role: Role::Assistant,
-            text: response.result_text.clone(),
-        });
-
         Ok(response)
-    }
-
-    pub fn clear_history(&self) -> Result<(), PhiError> {
-        let mut history = self.history.lock().map_err(|e| PhiError::HistoryError {
-            error_text: e.to_string(),
-        })?;
-        history.clear();
-        Ok(())
-    }
-
-    pub fn get_history(&self) -> Result<Vec<HistoryEntry>, PhiError> {
-        let history = self.history.lock().map_err(|e| PhiError::HistoryError {
-            error_text: e.to_string(),
-        })?;
-        Ok(history.clone().into_iter().collect())
     }
 
     fn count_tokens(&self, text: &str) -> usize {
@@ -460,18 +533,17 @@ impl PhiEngine {
 
     fn trim_history_to_token_limit(
         &self,
-        history: &mut VecDeque<HistoryEntry>,
+        history: &mut Vec<ConversationMessage>,
         token_limit: u16,
     ) {
         let mut token_count = history
             .iter()
             .map(|entry| self.count_tokens(&entry.text))
             .sum::<usize>();
-    
+
         while token_count > token_limit as usize {
-            if let Some(front) = history.pop_front() {
-                token_count -= self.count_tokens(&front.text);
-            }
+            let front = history.remove(0);
+            token_count -= self.count_tokens(&front.text);
         }
     }
 }
