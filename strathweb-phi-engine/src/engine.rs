@@ -238,7 +238,7 @@ impl PhiEngineBuilder {
             context_window: inner.context_window.clone(),
         };
 
-        let conversation_state: ConversationState = ConversationState {
+        let conversation_context = ConversationContext {
             system_instruction: system_instruction,
             messages: Vec::new(),
         };
@@ -246,7 +246,7 @@ impl PhiEngineBuilder {
         let engine = PhiEngine::new(engine_options, inner.event_handler.clone())?;
         Ok(Arc::new(StatefulPhiEngine {
             engine: engine,
-            conversation_state: Mutex::new(conversation_state),
+            conversation_context: Mutex::new(conversation_context),
         }))
     }
 }
@@ -302,34 +302,34 @@ pub enum TokenizerProvider {
 }
 
 #[derive(Debug, Clone)]
-pub struct ConversationState {
+pub struct ConversationContext {
     pub system_instruction: Option<String>,
     pub messages: Vec<ConversationMessage>,
 }
 
 pub struct StatefulPhiEngine {
     pub engine: PhiEngine,
-    pub conversation_state: Mutex<ConversationState>,
+    pub conversation_context: Mutex<ConversationContext>,
 }
 
 impl StatefulPhiEngine {
     pub fn run_inference(
         &self,
-        prompt_text: String,
+        prompt_text: &str,
         inference_options: &InferenceOptions,
     ) -> Result<InferenceResult, PhiError> {
-        let mut conversation_state =
-            self.conversation_state
+        let mut conversation_context =
+            self.conversation_context
                 .lock()
                 .map_err(|e| PhiError::LockingError {
                     error_text: e.to_string(),
                 })?;
         let result = self.engine
-            .run_inference(prompt_text, conversation_state.clone(), inference_options).map_err(|e| PhiError::InferenceError {
+            .run_inference(prompt_text, &conversation_context, inference_options).map_err(|e| PhiError::InferenceError {
                 error_text: e.to_string(),
             })?;
 
-        conversation_state.messages.push(ConversationMessage {
+            conversation_context.messages.push(ConversationMessage {
             role: Role::Assistant,
             text: result.result_text.clone(),
         });
@@ -337,24 +337,24 @@ impl StatefulPhiEngine {
     }
 
     pub fn clear_messsages(&self) -> Result<(), PhiError> {
-        let mut conversation_state =
-            self.conversation_state
+        let mut conversation_context =
+            self.conversation_context
                 .lock()
                 .map_err(|e| PhiError::LockingError {
                     error_text: e.to_string(),
                 })?;
-        conversation_state.messages.clear();
+                conversation_context.messages.clear();
         Ok(())
     }
 
     pub fn get_history(&self) -> Result<Vec<ConversationMessage>, PhiError> {
-        let conversation_state =
-            self.conversation_state
+        let conversation_context =
+            self.conversation_context
                 .lock()
                 .map_err(|e| PhiError::LockingError {
                     error_text: e.to_string(),
                 })?;
-        Ok(conversation_state.messages.clone())
+        Ok(conversation_context.messages.clone())
     }
 }
 
@@ -483,15 +483,15 @@ impl PhiEngine {
 
     pub fn run_inference(
         &self,
-        prompt_text: String,
-        conversation_state: ConversationState,
+        prompt_text: &str,
+        conversation_context: &ConversationContext,
         inference_options: &InferenceOptions,
     ) -> Result<InferenceResult, PhiError> {
-        let mut history = conversation_state.messages.clone();
+        let mut history = conversation_context.messages.clone();
         self.trim_history_to_token_limit(&mut history, self.context_window);
         history.push(ConversationMessage {
             role: Role::User,
-            text: prompt_text.clone(),
+            text: prompt_text.into(),
         });
 
         let history_prompt = history
@@ -505,7 +505,7 @@ impl PhiEngine {
             })
             .collect::<String>();
 
-        let system_instruction = conversation_state.system_instruction.unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
+        let system_instruction = conversation_context.system_instruction.clone().unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
 
         // Phi-3 has no system prompt so we inject it as a user prompt
         let prompt_with_history = format!("<|user|>\nYour overall instructions are: {}<|end|>\n<|assistant|>Understood, I will adhere to these instructions<|end|>{}\n<|assistant|>\n", system_instruction, history_prompt);

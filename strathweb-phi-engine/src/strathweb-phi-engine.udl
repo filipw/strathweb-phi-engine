@@ -52,19 +52,19 @@ dictionary ConversationMessage {
     string text;
 };
 
-dictionary ConversationState {
+dictionary ConversationContext {
     sequence<ConversationMessage> messages;
     string? system_instruction;
 };
 
 interface PhiEngine {
     [Throws=PhiError]
-    InferenceResult run_inference(string prompt_text, ConversationState conversation_state, [ByRef]InferenceOptions inference_options);
+    InferenceResult run_inference([ByRef]string prompt_text, [ByRef]ConversationContext conversation_context, [ByRef]InferenceOptions inference_options);
 };
 
 interface StatefulPhiEngine {
     [Throws=PhiError]
-    InferenceResult run_inference(string prompt_text, [ByRef]InferenceOptions inference_options);
+    InferenceResult run_inference([ByRef]string prompt_text, [ByRef]InferenceOptions inference_options);
     
     [Throws=PhiError]
     void clear_messsages();

@@ -2,6 +2,7 @@ use anyhow::{Error as E, Result};
 use candle_core::{Device, Tensor};
 use candle_transformers::generation::{LogitsProcessor, Sampling};
 use candle_transformers::models::quantized_phi3::ModelWeights as Phi3;
+use tracing::info;
 use std::io::Write;
 use std::sync::Arc;
 use tokenizers::Tokenizer;
@@ -127,7 +128,7 @@ impl TextGenerator {
                 || &next_token == end_token
                 || &next_token == assistant_token
             {
-                println!("\n\nBreaking due to end token: ${:?}$", next_token);
+                info!("Breaking due to end token: {}", next_token);
                 std::io::stdout().flush()?;
                 break;
             }

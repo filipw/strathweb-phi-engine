@@ -5,7 +5,7 @@ use std::sync::atomic::Ordering;
 
 use crate::engine::BoxedPhiEventHandler;
 use crate::engine::ConversationMessage;
-use crate::engine::ConversationState;
+use crate::engine::ConversationContext;
 use crate::engine::InferenceOptions;
 use crate::engine::InferenceOptionsBuilder;
 use crate::engine::InferenceResult;
