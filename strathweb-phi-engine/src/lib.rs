@@ -1,5 +1,8 @@
 uniffi::include_scaffolding!("strathweb-phi-engine");
 
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
+
 use crate::engine::BoxedPhiEventHandler;
 use crate::engine::PhiEngineBuilder;
 use crate::engine::InferenceOptions;
@@ -12,11 +15,33 @@ use crate::engine::HistoryEntry;
 use crate::engine::TokenizerProvider;
 use crate::engine::PhiModelProvider;
 
+use once_cell::sync::Lazy;
 use thiserror::Error;
+use tracing::Level;
+use tracing_subscriber::{filter::FilterFn, prelude::*};
 
 pub mod engine;
 pub mod token_stream;
 pub mod text_generator;
+
+static TRACING_INITIALIZED: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
+
+pub fn enable_tracing() {
+    if TRACING_INITIALIZED.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_ok() {
+        // mute the annoying warnings https://github.com/huggingface/tokenizers/issues/1366
+        let filter = FilterFn::new(|metadata|
+            metadata.level() <= &Level::DEBUG && 
+            !metadata.target().starts_with("tokenizers::tokenizer::serialization")
+        );
+        let layer = tracing_subscriber::fmt::layer()
+            .with_level(true)
+            .pretty()
+            .with_filter(filter);
+
+        tracing_subscriber::registry().with(layer).init();
+    }
+}
+
 
 #[derive(Error, Debug)]
 pub enum PhiError {

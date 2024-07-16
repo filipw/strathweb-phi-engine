@@ -9,6 +9,7 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tokenizers::Tokenizer;
+use tracing::debug;
 
 use crate::text_generator::TextGenerator;
 use crate::PhiError;
@@ -308,7 +309,7 @@ impl PhiEngine {
                     .map_err(|e| PhiError::InitalizationError {
                         error_text: e.to_string(),
                     })?;
-                println!(" --> Downloaded model to {:?}...", model_path);
+                debug!(" --> Downloaded model to {:?}...", model_path);
                 model_path
             }
             PhiModelProvider::FileSystem { model_path } => model_path.into(),
@@ -333,7 +334,7 @@ impl PhiEngine {
                     .map_err(|e| PhiError::InitalizationError {
                         error_text: e.to_string(),
                     })?;
-                println!(" --> Downloaded tokenizer to {:?}...", tokenizer_path);
+                debug!(" --> Downloaded tokenizer to {:?}...", tokenizer_path);
                 tokenizer_path
             }
             TokenizerProvider::FileSystem { tokenizer_path } => tokenizer_path.into(),
@@ -366,7 +367,7 @@ impl PhiEngine {
 
         let event_handler_clone = event_handler.clone();
 
-        println!(" --> Loaded the model in {:?}", start.elapsed());
+        debug!(" --> Loaded the model in {:?}", start.elapsed());
         if let Some(event_handler) = event_handler {
             event_handler
                 .handler

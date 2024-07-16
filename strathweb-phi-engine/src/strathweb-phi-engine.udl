@@ -1,4 +1,5 @@
 namespace strathweb_phi_engine {
+    void enable_tracing();
 };
 
 dictionary InferenceOptions {
