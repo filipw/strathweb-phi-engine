@@ -2,6 +2,7 @@ use anyhow::{Error as E, Result};
 use candle_core::{Device, Tensor};
 use candle_transformers::generation::{LogitsProcessor, Sampling};
 use candle_transformers::models::quantized_phi3::ModelWeights as Phi3;
+use tracing::info;
 use std::io::Write;
 use std::sync::Arc;
 use tokenizers::Tokenizer;
@@ -81,12 +82,11 @@ impl TextGenerator {
         all_tokens.push(next_token);
         if let Some(t) = tos.next_token(next_token)? {
             if let Some(event_handler) = &self.event_handler {
-                event_handler
-                    .handler
-                    .on_inference_token(t)
-                    .map_err(|e| PhiError::InferenceError {
+                event_handler.handler.on_inference_token(t).map_err(|e| {
+                    PhiError::InferenceError {
                         error_text: e.to_string(),
-                    })?;
+                    }
+                })?;
             }
         }
 
@@ -128,19 +128,18 @@ impl TextGenerator {
                 || &next_token == end_token
                 || &next_token == assistant_token
             {
-                println!("\n\nBreaking due to end token: ${:?}$", next_token);
+                info!("Breaking due to end token: {}", next_token);
                 std::io::stdout().flush()?;
                 break;
             }
 
             if let Some(t) = tos.next_token(next_token)? {
                 if let Some(event_handler) = &self.event_handler {
-                    event_handler
-                        .handler
-                        .on_inference_token(t)
-                        .map_err(|e| PhiError::InferenceError {
+                    event_handler.handler.on_inference_token(t).map_err(|e| {
+                        PhiError::InferenceError {
                             error_text: e.to_string(),
-                        })?;
+                        }
+                    })?;
                 }
             }
             sampled += 1;

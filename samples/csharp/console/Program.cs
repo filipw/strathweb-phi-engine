@@ -10,9 +10,8 @@ var inferenceOptions = inferenceOptionsBuilder.Build();
 var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), ".cache");
 
 var modelBuilder = new PhiEngineBuilder();
-modelBuilder.WithSystemInstruction("You are a hockey poet");
 modelBuilder.WithEventHandler(new BoxedPhiEventHandler(new ModelEventsHandler()));
-var model = modelBuilder.Build(cacheDir);
+var model = modelBuilder.BuildStateful(cacheDir, "You are a hockey poet");
 
 var result = model.RunInference("Write a haiku about ice hockey", inferenceOptions);
 Console.WriteLine($"{Environment.NewLine}Tokens Generated: {result.tokenCount}{Environment.NewLine}Tokens per second: {result.tokensPerSecond}{Environment.NewLine}Duration: {result.duration}s");

@@ -47,20 +47,30 @@ dictionary InferenceResult {
 	f64 tokens_per_second;
 };
 
-dictionary HistoryEntry {
+dictionary ConversationMessage {
     Role role;
     string text;
 };
 
+dictionary ConversationContext {
+    sequence<ConversationMessage> messages;
+    string? system_instruction;
+};
+
 interface PhiEngine {
     [Throws=PhiError]
-    InferenceResult run_inference(string prompt_text, [ByRef]InferenceOptions inference_options);
+    InferenceResult run_inference([ByRef]string prompt_text, [ByRef]ConversationContext conversation_context, [ByRef]InferenceOptions inference_options);
+};
+
+interface StatefulPhiEngine {
+    [Throws=PhiError]
+    InferenceResult run_inference([ByRef]string prompt_text, [ByRef]InferenceOptions inference_options);
     
     [Throws=PhiError]
-    void clear_history();
+    void clear_messsages();
 
     [Throws=PhiError]
-    sequence<HistoryEntry> get_history();
+    sequence<ConversationMessage> get_history();
 };
 
 interface PhiEngineBuilder {
@@ -68,9 +78,6 @@ interface PhiEngineBuilder {
 
     [Throws=PhiError]
     void with_context_window(u16 context_window);
-
-    [Throws=PhiError]
-    void with_system_instruction(string system_instruction);
 
     [Throws=PhiError]
     void with_flash_attention(boolean use_flash_attention);
@@ -86,6 +93,9 @@ interface PhiEngineBuilder {
 
     [Throws=PhiError]
     PhiEngine build(string cache_dir);
+
+    [Throws=PhiError]
+    StatefulPhiEngine build_stateful(string cache_dir, string? system_instruction);
 };
 
 [Enum]
@@ -122,5 +132,4 @@ interface PhiError {
     InitalizationError(string error_text);
     LockingError(string error_text);
     InferenceError(string error_text);
-    HistoryError(string error_text);
 };

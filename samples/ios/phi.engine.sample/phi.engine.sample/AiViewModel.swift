@@ -8,7 +8,7 @@
 import Foundation
 
 class Phi3ViewModel: ObservableObject {
-    var engine: PhiEngine?
+    var engine: StatefulPhiEngine?
     let inferenceOptions: InferenceOptions
     @Published var isLoading: Bool = false
     @Published var isLoadingEngine: Bool = false
@@ -29,10 +29,9 @@ class Phi3ViewModel: ObservableObject {
         }
         
         let engineBuilder = PhiEngineBuilder()
-        try! engineBuilder.withSystemInstruction(systemInstruction: "You are a hockey poet")
         try! engineBuilder.withEventHandler(eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler(parent: self)))
         
-        self.engine = try! engineBuilder.build(cacheDir: FileManager.default.temporaryDirectory.path())
+        self.engine = try! engineBuilder.buildStateful(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: "You are a hockey poet")
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true
