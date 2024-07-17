@@ -59,4 +59,15 @@ pub enum PhiError {
 
     #[error("InferenceError with message: `{error_text}`")]
     InferenceError { error_text: String },
+
+    #[error("GPU is not supported on this architecture")]
+    GpuNotSupported,
 }
+
+// candle does not support Metal on iOS yet
+#[cfg(target_arch = "aarch64")]
+#[cfg(target_os = "macos")]
+const GPU_SUPPORTED: bool = true;
+
+#[cfg(not(all(target_arch = "aarch64", target_os = "macos")))]
+const GPU_SUPPORTED: bool = false;

@@ -11,7 +11,7 @@ use tokenizers::Tokenizer;
 use tracing::debug;
 
 use crate::text_generator::TextGenerator;
-use crate::PhiError;
+use crate::{PhiError, GPU_SUPPORTED};
 
 #[derive(Debug, Clone)]
 pub struct ConversationMessage {
@@ -134,6 +134,7 @@ pub struct EngineOptions {
     pub tokenizer_provider: TokenizerProvider,
     pub use_flash_attention: bool,
     pub context_window: Option<u16>,
+    pub use_gpu: bool,
 }
 
 pub trait PhiEventHandler: Send + Sync {
@@ -197,6 +198,14 @@ impl PhiEngineBuilder {
         Ok(())
     }
 
+    pub fn try_use_gpu(&self) -> Result<bool, PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.use_gpu = GPU_SUPPORTED;
+        Ok(GPU_SUPPORTED)
+    }
+
     pub fn with_tokenizer_provider(
         &self,
         tokenizer_provider: TokenizerProvider,
@@ -218,6 +227,7 @@ impl PhiEngineBuilder {
             tokenizer_provider: inner.tokenizer_provider.clone(),
             use_flash_attention: inner.use_flash_attention,
             context_window: inner.context_window.clone(),
+            use_gpu: inner.use_gpu,
         };
         PhiEngine::new(engine_options, inner.event_handler.clone()).map(|engine| Arc::new(engine))
     }
@@ -236,6 +246,7 @@ impl PhiEngineBuilder {
             tokenizer_provider: inner.tokenizer_provider.clone(),
             use_flash_attention: inner.use_flash_attention,
             context_window: inner.context_window.clone(),
+            use_gpu: inner.use_gpu,
         };
 
         let conversation_context = ConversationContext {
@@ -257,6 +268,7 @@ struct PhiEngineBuilderInner {
     model_provider: PhiModelProvider,
     use_flash_attention: bool,
     event_handler: Option<Arc<BoxedPhiEventHandler>>,
+    use_gpu: bool
 }
 
 impl PhiEngineBuilderInner {
@@ -272,6 +284,7 @@ impl PhiEngineBuilderInner {
                 model_file_name: "Phi-3-mini-4k-instruct-q4.gguf".to_string(),
                 model_revision: "main".to_string(),
             },
+            use_gpu: false,
             event_handler: None,
             use_flash_attention: false,
         }
@@ -372,10 +385,14 @@ impl PhiEngine {
         event_handler: Option<Arc<BoxedPhiEventHandler>>,
     ) -> Result<Self, PhiError> {
         let start = std::time::Instant::now();
-        // candle does not support Metal on iOS yet
         // this also requires building with features = ["metal"]
         //let device = Device::new_metal(0).unwrap();
-        let device = Device::Cpu;
+        //let device = Device::Cpu;
+        let device = if engine_options.use_gpu {
+            Device::new_metal(0).map_err(|_| PhiError::GpuNotSupported)?
+        } else {
+            Device::Cpu
+        };
 
         let model_path = match engine_options.model_provider {
             PhiModelProvider::HuggingFace {

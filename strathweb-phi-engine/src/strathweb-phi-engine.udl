@@ -92,6 +92,9 @@ interface PhiEngineBuilder {
     void with_tokenizer_provider(TokenizerProvider tokenizer_provider);
 
     [Throws=PhiError]
+    boolean try_use_gpu();
+
+    [Throws=PhiError]
     PhiEngine build(string cache_dir);
 
     [Throws=PhiError]
@@ -132,4 +135,5 @@ interface PhiError {
     InitalizationError(string error_text);
     LockingError(string error_text);
     InferenceError(string error_text);
+    GpuNotSupported();
 };
