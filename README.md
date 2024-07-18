@@ -3,13 +3,19 @@
 A cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally using [candle](https://github.com/huggingface/candle).
 
 Supported platforms:
- - macOS (arm64, via Swift bindings + XCframework)
- - iOS (via Swift bindings + XCframework)
- - .NET (Windows x64 & arm64, Linux x64 & arm64, macOS arm64) - via C# bindings + native library (.dll, .so, .dylib)
+ - Swift (Swift bindings + XCframework + native library .a/.dylib)
+   - macOS (arm64)
+   - iOS
+ - .NET (C# bindings + native library as .dll, .so, .dylib)
+   - Windows x64 & arm64
+   - Linux x64 & arm64
+   - macOS arm64
+- Kotlin (Kotlin bindings + native library as .so/.dylib)
+   - macOS arm64
 
 ## Building instructions
 
-### iOS
+### Swift
 
 Run `./build-xcframework.sh` to build the xcframework.
 
@@ -32,9 +38,14 @@ cd ../samples/csharp/console
 dotnet run -c Release
 ```
 
-## Blog post
+### Kotlin
 
-For a detailed explanation of how this works, check out the blog post [here](https://www.strathweb.com/2024/05/running-microsoft-phi-3-model-in-an-ios-app-with-rust/).
+Run the sample console app:
+
+```shell
+cd samples/kotlin
+./run.sh
+```
 
 ## Compatibility notes
 
@@ -46,11 +57,9 @@ For a detailed explanation of how this works, check out the blog post [here](htt
 
 ✅ Tested on macOS arm64
 
-### macOS (Swift)
+### Swift
 
 ✅ Tested on macOS arm64. Supports Metal.
-
-### iOS
 
 ✅ Tested on iPad Air M1 8GB RAM
 
@@ -59,3 +68,11 @@ For a detailed explanation of how this works, check out the blog post [here](htt
 ❌ Will not work on 4GB RAM iPhones
 
 However, for 4GB RAM iPhones, it's possible to use the (very) low fidelity Q2_K quantized model. Such model is not included in the official Phi-3 release, but I tested [this one from HuggingFace](https://huggingface.co/SanctumAI/Phi-3-mini-4k-instruct-GGUF) on an iPhone 12 mini successfully.
+
+### Kotlin
+
+✅ Tested on macOS arm64. Supports Metal.
+
+## Blog post
+
+For a detailed explanation of how this works, check out the blog post [here](https://www.strathweb.com/2024/05/running-microsoft-phi-3-model-in-an-ios-app-with-rust/).
