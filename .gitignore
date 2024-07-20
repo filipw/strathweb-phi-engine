@@ -405,3 +405,4 @@ phi.engine.sample/phi.engine.sample.xcodeproj/xcuserdata
 samples/ios/phi.engine.sample/phi.engine.sample/strathweb_phi_engine_framework.xcframework
 *.xcuserstate
 phi-engine-swift-sample
+samples/kotlin/out

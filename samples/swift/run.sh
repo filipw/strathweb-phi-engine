@@ -1,8 +1,6 @@
 #!/bin/bash
 
-rm -rf deps
 rm -f phi-engine-swift-sample
-mkdir -p deps
 
 cd ../../
 ./build-xcframework.sh
