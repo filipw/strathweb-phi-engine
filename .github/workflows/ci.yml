@@ -5,13 +5,13 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -22,3 +22,21 @@ jobs:
       run: |
         cd strathweb-phi-engine
         cargo build --release
+
+  build-swift:
+    runs-on: macos-14
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Rust targets
+      run: |
+        rustup target add aarch64-apple-ios
+        rustup target add aarch64-apple-ios-sim
+        rustup target add aarch64-apple-darwin
+    - name: Build XCFramework
+      run: ./build-xcframework.sh
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: strathweb_phi_engine_framework.xcframework
+        path: artifacts/swift/strathweb_phi_engine_framework.xcframework
