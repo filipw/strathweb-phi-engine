@@ -21,10 +21,9 @@ fn main() {
         .arg("--out-dir")
         .arg(out_dir)
         .arg(udl_file)
-        .status()
-        .expect("Failed to execute process");
+        .status();
 
-    if !status.success() {
+    if status.is_err() {
         eprintln!("Warning: Failed when generating C# bindings, make sure you have uniffi-bindgen-cs installed.");
     }
 }
