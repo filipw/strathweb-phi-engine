@@ -65,7 +65,7 @@ jobs:
         name: strathweb_phi_engine_framework.xcframework
         path: artifacts/swift/strathweb_phi_engine_framework.xcframework
 
- build-nuget:
+  build-nuget:
     runs-on: ubuntu-latest
 
     needs: [build]
