@@ -21,35 +21,14 @@ jobs:
     - uses: actions/checkout@v3
     - name: Install Rust
       run: rustup update stable
-    - name: Install Linux arm64 gcc
-      if: matrix.os == 'ubuntu-latest'
-      run: | 
-        sudo apt update
-        sudo apt install gcc-aarch64-linux-gnu
-    - name: Install extra Rust target for Linux arm64
-      if: matrix.os == 'ubuntu-latest'
-      run: rustup target add aarch64-unknown-linux-gnu
-    - name: Install extra Rust target for Windows arm64
-      if: matrix.os == 'windows-latest'
-      run: rustup target add aarch64-pc-windows-msvc
     - name: Install uniffi-bindgen-cs
       run: cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
     - name: Build default target
       run: |
         cd strathweb-phi-engine
         cargo build --release 
-    - name: Build Linux arm64
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        cd strathweb-phi-engine
-        cargo build --release --target aarch64-unknown-linux-gnu
-    - name: Build Windows arm64
-      if: matrix.os == 'windows-latest'
-      run: |
-        cd strathweb-phi-engine
-        cargo build --release --target aarch64-pc-windows-msvc
         
-    - name: Upload default artifact
+    - name: Upload default artifacts
       uses: actions/upload-artifact@v3
       with:
          name: build-artifacts-${{ matrix.os }}
@@ -58,20 +37,6 @@ jobs:
            strathweb-phi-engine/target/release/*.dylib
            strathweb-phi-engine/target/release/*.dll
 
-    - name: Upload Linux arm64 artifact
-      if: matrix.os == 'ubuntu-latest'
-      uses: actions/upload-artifact@v3
-      with:
-         name: build-artifacts-${{ matrix.os }}-arm64
-         path: strathweb-phi-engine/target/aarch64-unknown-linux-gnu/release/*.so
-
-    - name: Upload Windows arm64 artifact
-      if: matrix.os == 'windows-latest'
-      uses: actions/upload-artifact@v3
-      with:
-         name: build-artifacts-${{ matrix.os }}-arm64
-         path: strathweb-phi-engine/target/aarch64-pc-windows-msvc/release/*.dll
-          
   build-swift:
     runs-on: macos-14
 
