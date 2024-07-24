@@ -58,18 +58,14 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
          name: build-artifacts-${{ matrix.os }}-arm64
-         path: |
-           strathweb-phi-engine/target/release/aarch64-unknown-linux-gnu/*.so
-           strathweb-phi-engine/target/release/*.dylib
-           strathweb-phi-engine/target/release/*.dll
+         path: strathweb-phi-engine/target/aarch64-unknown-linux-gnu/release/*.so
 
     - name: Upload Windows arm64 artifact
       if: matrix.os == 'windows-latest'
       uses: actions/upload-artifact@v3
       with:
          name: build-artifacts-${{ matrix.os }}-arm64
-         path: |
-           strathweb-phi-engine/target/release/aarch64-pc-windows-msvc/*.dll
+         path: strathweb-phi-engine/target/aarch64-pc-windows-msvc/release/*.dll
           
   build-swift:
     runs-on: macos-14
