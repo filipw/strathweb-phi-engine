@@ -30,7 +30,7 @@ jobs:
     - name: Upload default artifacts
       uses: actions/upload-artifact@v3
       with:
-         name: native-library
+         name: native-library-${{ matrix.os }}
          path: |
            strathweb-phi-engine/target/release/*.so
            strathweb-phi-engine/target/release/*.dylib
@@ -42,7 +42,7 @@ jobs:
       with:
          name: language-bindings
          path: |
-           strathweb-phi-engine/bindings/*.*
+           strathweb-phi-engine/bindings/**
 
 
   build-swift:
