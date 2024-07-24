@@ -16,27 +16,61 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-14, windows-latest]
-        architecture: [x86_64, aarch64]
 
     steps:
     - uses: actions/checkout@v3
     - name: Install Rust
       run: rustup update stable
-    - name: Install Rust target
-      run: rustup target add ${{ matrix.architecture }}-${{ matrix.os == 'macos-14' && matrix.architecture == 'aarch64' && 'apple-darwin' || matrix.os == 'macos-14' && 'x86_64-apple-darwin' || matrix.os == 'ubuntu-latest' && 'unknown-linux-gnu' || 'pc-windows-msvc' }}
+    - name: Install extra Rust target for Linux arm64
+      if: matrix.os == 'ubuntu-latest'
+      run: rustup target add aarch64-unknown-linux-gnu
+    - name: Install extra Rust target for Windows arm64
+      if: matrix.os == 'windows-latest'
+      run: rustup target add aarch64-pc-windows-msvc
     - name: Install uniffi-bindgen-cs
       run: cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
-    - name: Build
+    - name: Build default target
       run: |
         cd strathweb-phi-engine
-        cargo build --release --target ${{ matrix.architecture }}-${{ matrix.os == 'macos-14' && matrix.architecture == 'aarch64' && 'apple-darwin' || matrix.os == 'macos-14' && 'x86_64-apple-darwin' || matrix.os == 'ubuntu-latest' && 'unknown-linux-gnu' || 'pc-windows-msvc' }}
-    - name: Upload artifact
+        cargo build --release 
+    - name: Build Linux arm64
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        cd strathweb-phi-engine
+        cargo build --release --target aarch64-unknown-linux-gnu
+    - name: Build Windows arm64
+      if: matrix.os == 'windows-latest'
+      run: |
+        cd strathweb-phi-engine
+        cargo build --release --target aarch64-pc-windows-msvc
+        
+    - name: Upload default artifact
       uses: actions/upload-artifact@v3
       with:
-        name: build-artifacts-${{ matrix.os }}-${{ matrix.architecture }}
-        path: |
-          strathweb-phi-engine/target/${{ matrix.architecture }}-${{ matrix.os == 'macos-14' && matrix.architecture == 'aarch64' && 'apple-darwin' || matrix.os == 'macos-14' && 'x86_64-apple-darwin' || matrix.os == 'ubuntu-latest' && 'unknown-linux-gnu' || 'pc-windows-msvc' }}/release/*
+         name: build-artifacts-${{ matrix.os }}
+         path: |
+           strathweb-phi-engine/target/release/*.so
+           strathweb-phi-engine/target/release/*.dylib
+           strathweb-phi-engine/target/release/*.dll
 
+    - name: Upload Linux arm64 artifact
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v3
+      with:
+         name: build-artifacts-${{ matrix.os }}-arm64
+         path: |
+           strathweb-phi-engine/target/release/aarch64-unknown-linux-gnu/*.so
+           strathweb-phi-engine/target/release/*.dylib
+           strathweb-phi-engine/target/release/*.dll
+
+    - name: Upload Windows arm64 artifact
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v3
+      with:
+         name: build-artifacts-${{ matrix.os }}-arm64
+         path: |
+           strathweb-phi-engine/target/release/aarch64-pc-windows-msvc/*.dll
+          
   build-swift:
     runs-on: macos-14
 
