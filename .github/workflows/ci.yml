@@ -16,23 +16,26 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-14, windows-latest]
+        architecture: [x86_64, aarch64]
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install Rust
+      run: rustup update stable
+    - name: Install Rust target
+      run: rustup target add ${{ matrix.architecture }}-${{ matrix.os == 'macos-14' && matrix.architecture == 'aarch64' && 'apple-darwin' || matrix.os == 'macos-14' && 'x86_64-apple-darwin' || matrix.os == 'ubuntu-latest' && 'unknown-linux-gnu' || 'pc-windows-msvc' }}
     - name: Install uniffi-bindgen-cs
       run: cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
     - name: Build
       run: |
         cd strathweb-phi-engine
-        cargo build --release
+        cargo build --release --target ${{ matrix.architecture }}-${{ matrix.os == 'macos-14' && matrix.architecture == 'aarch64' && 'apple-darwin' || matrix.os == 'macos-14' && 'x86_64-apple-darwin' || matrix.os == 'ubuntu-latest' && 'unknown-linux-gnu' || 'pc-windows-msvc' }}
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: build-artifacts-${{ matrix.os }}
+        name: build-artifacts-${{ matrix.os }}-${{ matrix.architecture }}
         path: |
-          strathweb-phi-engine/target/release/*.so
-          strathweb-phi-engine/target/release/*.dylib
-          strathweb-phi-engine/target/release/*.dll
+          strathweb-phi-engine/target/${{ matrix.architecture }}-${{ matrix.os == 'macos-14' && matrix.architecture == 'aarch64' && 'apple-darwin' || matrix.os == 'macos-14' && 'x86_64-apple-darwin' || matrix.os == 'ubuntu-latest' && 'unknown-linux-gnu' || 'pc-windows-msvc' }}/release/*
 
   build-swift:
     runs-on: macos-14
