@@ -64,3 +64,43 @@ jobs:
       with:
         name: strathweb_phi_engine_framework.xcframework
         path: artifacts/swift/strathweb_phi_engine_framework.xcframework
+
+ build-nuget:
+    runs-on: ubuntu-latest
+
+    needs: [build]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Download Linux artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: native-library-ubuntu-latest
+        path: artifacts/linux
+    - name: Download macOS artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: native-library-macos-14
+        path: artifacts/macos
+    - name: Download Windows artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: native-library-windows-latest
+        path: artifacts/windows
+    - name: Copy native libraries
+      run: |
+        mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/linux-x64/native
+        mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/osx-arm64/native
+        mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/win-x64/native
+        cp artifacts/linux/*.so packages/csharp/Strathweb.Phi.Engine/runtimes/linux-x64/native/
+        cp artifacts/macos/*.dylib packages/csharp/Strathweb.Phi.Engine/runtimes/osx-arm64/native/
+        cp artifacts/windows/*.dll packages/csharp/Strathweb.Phi.Engine/runtimes/win-x64/native/
+    - name: Build NuGet package
+      run: |
+        cd packages/csharp/Strathweb.Phi.Engine
+        dotnet pack -c Release
+    - name: Upload NuGet package
+      uses: actions/upload-artifact@v3
+      with:
+        name: strathweb_phi_engine_nuget_package
+        path: packages/csharp/Strathweb.Phi.Engine/bin/Release/*.nupkg
