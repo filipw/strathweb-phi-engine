@@ -35,10 +35,10 @@ Build the Nuget package for your platform:
 cd strathweb-phi-engine
 cargo build --release
 cd ../packages/csharp/Strathweb.Phi.Engine
-dotnet build -c Release
+dotnet pack -c Release -o ../../../artifacts/csharp
 ```
 
-Nuget package will be in `bin/Release/Strathweb.Phi.Engine.1.0.0.nupkg`.
+Nuget package will be in `artifacts/csharp/Strathweb.Phi.Engine.1.0.0.nupkg`.
 (Optional) Run the sample console app:
 
 ```shell
