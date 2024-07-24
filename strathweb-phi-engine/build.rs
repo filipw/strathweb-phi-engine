@@ -17,10 +17,14 @@ fn main() {
     )
     .unwrap();
 
-    Command::new("uniffi-bindgen-cs")
+    let status = Command::new("uniffi-bindgen-cs")
         .arg("--out-dir")
         .arg(out_dir)
         .arg(udl_file)
-        .output()
-        .expect("Failed when generating C# bindings");
+        .status()
+        .expect("Failed to execute process");
+
+    if !status.success() {
+        eprintln!("Warning: Failed when generating C# bindings, make sure you have uniffi-bindgen-cs installed.");
+    }
 }
