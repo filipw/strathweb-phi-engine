@@ -31,8 +31,8 @@
     <PropertyGroup>
       <DestinationFolder Condition="$([MSBuild]::IsOsPlatform('MacOS'))">runtimes/osx-arm64/native/</DestinationFolder>
       <DestinationFolder Condition="$([MSBuild]::IsOsPlatform('Linux'))">runtimes/linux-x64/native/</DestinationFolder>
-      <DestinationFolder Condition="$([MSBuild]::IsOsPlatform('Windows') And $(PROCESSOR_ARCHITECTURE) == 'AMD64')">runtimes/win-x64/native/</DestinationFolder>
-      <DestinationFolder Condition="$([MSBuild]::IsOsPlatform('Windows') And $(PROCESSOR_ARCHITECTURE) == 'ARM64')">runtimes/win-arm64/native/</DestinationFolder>
+      <DestinationFolder Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == X64">runtimes/win-x64/native/</DestinationFolder>
+      <DestinationFolder Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == Arm64">runtimes/win-arm64/native/</DestinationFolder>
     </PropertyGroup>
     <Copy SourceFiles="@(NativeLibraries)" DestinationFolder="$(DestinationFolder)" SkipUnchangedFiles="true" />
   </Target>

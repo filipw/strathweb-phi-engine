@@ -45,25 +45,25 @@ jobs:
            strathweb-phi-engine/bindings/**
 
 
-  build-swift:
-    runs-on: macos-14
+  # build-swift:
+  #   runs-on: macos-14
 
-    steps:
-    - uses: actions/checkout@v3
-    - name: Install Rust targets
-      run: |
-        rustup target add aarch64-apple-ios
-        rustup target add aarch64-apple-ios-sim
-        rustup target add aarch64-apple-darwin
-    - name: Install uniffi-bindgen-cs
-      run: cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
-    - name: Build XCFramework
-      run: ./build-xcframework.sh
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: strathweb_phi_engine_framework.xcframework
-        path: artifacts/swift/strathweb_phi_engine_framework.xcframework
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - name: Install Rust targets
+  #     run: |
+  #       rustup target add aarch64-apple-ios
+  #       rustup target add aarch64-apple-ios-sim
+  #       rustup target add aarch64-apple-darwin
+  #   - name: Install uniffi-bindgen-cs
+  #     run: cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
+  #   - name: Build XCFramework
+  #     run: ./build-xcframework.sh
+  #   - name: Upload artifact
+  #     uses: actions/upload-artifact@v3
+  #     with:
+  #       name: strathweb_phi_engine_framework.xcframework
+  #       path: artifacts/swift/strathweb_phi_engine_framework.xcframework
 
   build-nuget:
     runs-on: ubuntu-latest
@@ -87,7 +87,12 @@ jobs:
       with:
         name: native-library-windows-latest
         path: artifacts/windows
-    - name: Copy native libraries
+    - name: Download bindings
+      uses: actions/download-artifact@v3
+      with:
+        name: language-bindings
+        path: artifacts/bindings
+    - name: Copy artifacts and bindings to package
       run: |
         mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/linux-x64/native
         mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/osx-arm64/native
@@ -95,9 +100,11 @@ jobs:
         cp artifacts/linux/*.so packages/csharp/Strathweb.Phi.Engine/runtimes/linux-x64/native/
         cp artifacts/macos/*.dylib packages/csharp/Strathweb.Phi.Engine/runtimes/osx-arm64/native/
         cp artifacts/windows/*.dll packages/csharp/Strathweb.Phi.Engine/runtimes/win-x64/native/
+        cp artifacts/bindings/*.cs packages/csharp/Strathweb.Phi.Engine/
     - name: Build NuGet package
       run: |
         cd packages/csharp/Strathweb.Phi.Engine
+        dotnet build -c Release
         dotnet pack -c Release
     - name: Upload NuGet package
       uses: actions/upload-artifact@v3
