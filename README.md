@@ -39,9 +39,8 @@ or
 
 ```shell
 cargo build --release --manifest-path strathweb-phi-engine/Cargo.toml
-cd packages/csharp/Strathweb.Phi.Engine
-dotnet build -c Release
-dotnet pack -c Release -o ../../../artifacts/csharp
+dotnet build packages/csharp/Strathweb.Phi.Engine -c Release
+dotnet pack packages/csharp/Strathweb.Phi.Engine -c Release -o artifacts/csharp
 ```
 
 Nuget package will be in `artifacts/csharp/Strathweb.Phi.Engine.0.1.0.nupkg`.
