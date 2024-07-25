@@ -32,9 +32,9 @@ cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bin
 Build the Nuget package for your platform:
 
 ```shell
-cd strathweb-phi-engine
-cargo build --release
-cd ../packages/csharp/Strathweb.Phi.Engine
+cargo build --release --manifest-path strathweb-phi-engine/Cargo.toml
+cd packages/csharp/Strathweb.Phi.Engine
+dotnet build -c Release
 dotnet pack -c Release -o ../../../artifacts/csharp
 ```
 
@@ -61,7 +61,11 @@ cd samples/kotlin
 
 ✅ Tested on Windows arm64
 
+✅ Tested on Windows x64
+
 ✅ Tested on Linux arm64
+
+✅ Tested on Linux x64
 
 ✅ Tested on macOS arm64
 
