@@ -17,7 +17,7 @@ Supported platforms:
 
 ### Swift
 
-Run `./build-xcframework.sh` to build the xcframework.
+Run `./build-xcframework.sh` to build the xcframework (arm64 Mac required).
 
 Then open `samples/io/phi.engine.sample/phi.engine.sample.xcodeproj` and build the SwiftUI app (iOS) or go to `samples/swift` and run `./run.sh` (macOS).
 
@@ -32,13 +32,19 @@ cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bin
 Build the Nuget package for your platform:
 
 ```shell
+./build-dotnet.sh
+```
+
+or
+
+```shell
 cargo build --release --manifest-path strathweb-phi-engine/Cargo.toml
 cd packages/csharp/Strathweb.Phi.Engine
 dotnet build -c Release
 dotnet pack -c Release -o ../../../artifacts/csharp
 ```
 
-Nuget package will be in `artifacts/csharp/Strathweb.Phi.Engine.1.0.0.nupkg`.
+Nuget package will be in `artifacts/csharp/Strathweb.Phi.Engine.0.1.0.nupkg`.
 (Optional) Run the sample console app:
 
 ```shell
