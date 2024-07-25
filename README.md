@@ -6,7 +6,7 @@ Supported platforms:
  - Swift (Swift bindings + XCframework + native library .a/.dylib)
    - macOS (arm64)
    - iOS
- - .NET (C# bindings + native library as .dll, .so, .dylib)
+ - .NET (NuGet package, C# bindings + native library as .dll, .so, .dylib)
    - Windows x64 & arm64
    - Linux x64 & arm64
    - macOS arm64
@@ -29,12 +29,20 @@ Install UniFFI C# bindings generator
 cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
 ```
 
-Run the sample console app:
+Build the Nuget package for your platform:
 
 ```shell
-cd strathweb-phi-engine
-cargo build --release
-cd ../samples/csharp/console
+cargo build --release --manifest-path strathweb-phi-engine/Cargo.toml
+cd packages/csharp/Strathweb.Phi.Engine
+dotnet build -c Release
+dotnet pack -c Release -o ../../../artifacts/csharp
+```
+
+Nuget package will be in `artifacts/csharp/Strathweb.Phi.Engine.1.0.0.nupkg`.
+(Optional) Run the sample console app:
+
+```shell
+cd samples/csharp/console
 dotnet run -c Release
 ```
 
@@ -53,7 +61,11 @@ cd samples/kotlin
 
 ✅ Tested on Windows arm64
 
+✅ Tested on Windows x64
+
 ✅ Tested on Linux arm64
+
+✅ Tested on Linux x64
 
 ✅ Tested on macOS arm64
 

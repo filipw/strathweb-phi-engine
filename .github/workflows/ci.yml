@@ -19,9 +19,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install Rust
-      run: rustup update stable
     - name: Install uniffi-bindgen-cs
+      if: matrix.os == 'ubuntu-latest'
       run: cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
     - name: Build default target
       run: |
@@ -29,13 +28,23 @@ jobs:
         cargo build --release 
         
     - name: Upload default artifacts
+      if: github.event_name != 'pull_request'
       uses: actions/upload-artifact@v3
       with:
-         name: build-artifacts-${{ matrix.os }}
+         name: native-library-${{ matrix.os }}
          path: |
            strathweb-phi-engine/target/release/*.so
            strathweb-phi-engine/target/release/*.dylib
            strathweb-phi-engine/target/release/*.dll
+    
+    - name: Upload bindings
+      if: matrix.os == 'ubuntu-latest' && github.event_name != 'pull_request'
+      uses: actions/upload-artifact@v3
+      with:
+         name: language-bindings
+         path: |
+           strathweb-phi-engine/bindings/**
+
 
   build-swift:
     runs-on: macos-14
@@ -52,7 +61,55 @@ jobs:
     - name: Build XCFramework
       run: ./build-xcframework.sh
     - name: Upload artifact
+      if: github.event_name != 'pull_request'
       uses: actions/upload-artifact@v3
       with:
         name: strathweb_phi_engine_framework.xcframework
         path: artifacts/swift/strathweb_phi_engine_framework.xcframework
+
+  build-nuget:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    needs: [build]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Download Linux artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: native-library-ubuntu-latest
+        path: artifacts/linux
+    - name: Download macOS artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: native-library-macos-14
+        path: artifacts/macos
+    - name: Download Windows artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: native-library-windows-latest
+        path: artifacts/windows
+    - name: Download bindings
+      uses: actions/download-artifact@v3
+      with:
+        name: language-bindings
+        path: artifacts/bindings
+    - name: Copy artifacts and bindings to package
+      run: |
+        mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/linux-x64/native
+        mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/osx-arm64/native
+        mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/win-x64/native
+        cp artifacts/linux/*.so packages/csharp/Strathweb.Phi.Engine/runtimes/linux-x64/native/
+        cp artifacts/macos/*.dylib packages/csharp/Strathweb.Phi.Engine/runtimes/osx-arm64/native/
+        cp artifacts/windows/*.dll packages/csharp/Strathweb.Phi.Engine/runtimes/win-x64/native/
+        cp artifacts/bindings/*.cs packages/csharp/Strathweb.Phi.Engine/
+    - name: Build NuGet package
+      run: |
+        cd packages/csharp/Strathweb.Phi.Engine
+        dotnet build -c Release
+        dotnet pack -c Release
+    - name: Upload NuGet package
+      uses: actions/upload-artifact@v3
+      with:
+        name: strathweb_phi_engine_nuget_package
+        path: packages/csharp/Strathweb.Phi.Engine/bin/Release/*.nupkg

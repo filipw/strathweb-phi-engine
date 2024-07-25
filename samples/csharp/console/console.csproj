@@ -5,18 +5,10 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <NativeOutputPath>../../../strathweb-phi-engine/target/$(Configuration.ToLowerInvariant())/</NativeOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Condition="$([MSBuild]::IsOsPlatform('MacOS'))" Include="$(NativeOutputPath)libstrathweb_phi_engine.dylib" CopyToOutputDirectory="PreserveNewest" />
-    <None Condition="$([MSBuild]::IsOsPlatform('Linux'))" Include="$(NativeOutputPath)libstrathweb_phi_engine.so" CopyToOutputDirectory="PreserveNewest" />
-    <None Condition="$([MSBuild]::IsOsPlatform('Windows'))" Include="$(NativeOutputPath)strathweb_phi_engine.dll" CopyToOutputDirectory="PreserveNewest" />
-</ItemGroup>
-
-<ItemGroup>
-  <Compile Include="..\..\..\strathweb-phi-engine\bindings\strathweb_phi_engine.cs" Link="strathweb_phi_engine.cs" />
-</ItemGroup>
+      <PackageReference Include="Strathweb.Phi.Engine" Version="0.1.0" />
+  </ItemGroup>
 
 </Project>

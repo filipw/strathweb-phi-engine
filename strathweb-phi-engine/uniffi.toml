@@ -1,5 +1,6 @@
 [bindings.csharp]
 cdylib_name = "strathweb_phi_engine"
+access_modifier = "public"
 
 [bindings.kotlin]
 package_name = "strathweb.phi.engine"
