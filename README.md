@@ -70,9 +70,18 @@ cd samples/kotlin
 Run the sample console app:
 
 ```shell
-cd samples/python
+cd samples/python/console
 ./run.sh
 ```
+
+or use the Jupyter Notebooks
+
+```shell
+cd samples/python/jputer
+./init.sh
+```
+
+Now open the Notebook and run the cells.
 
 ## Compatibility notes
 
