@@ -9,7 +9,7 @@ fn main() {
     generate_bindings(
         udl_file.into(),
         None,
-        vec![TargetLanguage::Swift, TargetLanguage::Kotlin],
+        vec![TargetLanguage::Swift, TargetLanguage::Kotlin, TargetLanguage::Python],
         Some(out_dir.into()),
         None,
         None,
