@@ -12,6 +12,11 @@ Supported platforms:
    - macOS arm64
 - Kotlin (Kotlin bindings + native library as .so/.dylib)
    - macOS arm64
+- Python 
+ (Kotlin bindings + native library as .so/.dylib)
+   - Windows x64 & arm64
+   - Linux x64 & arm64
+   - macOS arm64
 
 ## Building instructions
 
@@ -60,6 +65,15 @@ cd samples/kotlin
 ./run.sh
 ```
 
+### Python
+
+Run the sample console app:
+
+```shell
+cd samples/python
+./run.sh
+```
+
 ## Compatibility notes
 
 ### .NET
@@ -72,7 +86,7 @@ cd samples/kotlin
 
 ✅ Tested on Linux x64
 
-✅ Tested on macOS arm64
+✅ Tested on macOS arm64. Supports Metal.
 
 ### Swift
 
@@ -90,6 +104,12 @@ However, for 4GB RAM iPhones, it's possible to use the (very) low fidelity Q2_K 
 
 ✅ Tested on macOS arm64. Supports Metal.
 
+### Python
+
+✅ Tested on Windows arm64
+
+✅ Tested on macOS arm64. Supports Metal.
+
 ## Blog post
 
-For a detailed explanation of how this works, check out the blog post [here](https://www.strathweb.com/2024/05/running-microsoft-phi-3-model-in-an-ios-app-with-rust/).
+For an announcement post, go [here](https://strathweb.com/2024/07/announcing-strathweb-phi-engine-a-cross-platform-library-for-running-phi-3-anywhere/).
