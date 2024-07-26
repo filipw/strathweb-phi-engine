@@ -71,14 +71,14 @@ Run the sample console app:
 
 ```shell
 cd samples/python/console
-./run.sh
+./run.sh # or run.bat on Windows
 ```
 
 or use the Jupyter Notebooks
 
 ```shell
-cd samples/python/jputer
-./init.sh
+cd samples/python/jupyter
+./init.sh # or init.bat on Windows
 ```
 
 Now open the Notebook and run the cells.

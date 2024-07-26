@@ -410,3 +410,5 @@ samples/python/console/strathweb_phi_engine.py
 samples/python/console/uniffi_strathweb_phi_engine.dll
 samples/python/jupyter/strathweb_phi_engine.py
 samples/python/jupyter/uniffi_strathweb_phi_engine.dll
+samples/python/console/strathweb_phi_engine.dll
+samples/python/jupyter/strathweb_phi_engine.dll
