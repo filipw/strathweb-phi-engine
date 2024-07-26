@@ -5,3 +5,6 @@ access_modifier = "public"
 [bindings.kotlin]
 package_name = "strathweb.phi.engine"
 cdylib_name = "strathweb_phi_engine"
+
+[bindings.python]
+cdylib_name = "strathweb_phi_engine"
