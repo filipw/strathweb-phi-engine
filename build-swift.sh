@@ -26,3 +26,10 @@ xcodebuild -create-xcframework \
     -library "${TARGETDIR}/aarch64-apple-darwin/${RELDIR}/${STATIC_LIB_NAME}" \
     -headers "${NEW_HEADER_DIR}" \
     -output "${OUTDIR}/${NAME}_framework.xcframework"
+
+rm -rf "packages/swift/Strathweb.Phi.Engine/Libs"
+mkdir -p "packages/swift/Strathweb.Phi.Engine/Libs"
+cp -R "${OUTDIR}/${NAME}_framework.xcframework" "packages/swift/Strathweb.Phi.Engine/Libs"
+cp "strathweb-phi-engine/bindings/strathweb_phi_engine.swift" "packages/swift/Strathweb.Phi.Engine/Sources/Strathweb.Phi.Engine"
+
+swift build -c release --package-path packages/swift/Strathweb.Phi.Engine

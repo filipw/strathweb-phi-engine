@@ -56,16 +56,17 @@ jobs:
         rustup target add aarch64-apple-ios
         rustup target add aarch64-apple-ios-sim
         rustup target add aarch64-apple-darwin
-    - name: Install uniffi-bindgen-cs
-      run: cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
-    - name: Build XCFramework
-      run: ./build-xcframework.sh
+    - name: Build Swift Package
+      run: ./build-swift.sh
+    - name: Clean temporary build files from Swift Package
+      if: github.event_name != 'pull_request'
+      run: rm -rf packages/swift/Strathweb.Phi.Engine/.build
     - name: Upload artifact
       if: github.event_name != 'pull_request'
       uses: actions/upload-artifact@v3
       with:
-        name: strathweb_phi_engine_framework.xcframework
-        path: artifacts/swift/strathweb_phi_engine_framework.xcframework
+        name: Strathweb.Phi.Engine-SwiftPackage
+        path: packages/swift/Strathweb.Phi.Engine
 
   build-nuget:
     runs-on: ubuntu-latest

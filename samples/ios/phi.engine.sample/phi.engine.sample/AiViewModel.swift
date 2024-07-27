@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Strathweb_Phi_Engine
 
 class Phi3ViewModel: ObservableObject {
     var engine: StatefulPhiEngine?
@@ -31,7 +32,7 @@ class Phi3ViewModel: ObservableObject {
         let engineBuilder = PhiEngineBuilder()
         try! engineBuilder.withEventHandler(eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler(parent: self)))
         
-        self.engine = try! engineBuilder.buildStateful(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: "You are a hockey poet")
+        self.engine = try! engineBuilder.buildStateful(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: "You are a sports store agent. you speak only about sports equipment. Be brief, direct and polite.")
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true

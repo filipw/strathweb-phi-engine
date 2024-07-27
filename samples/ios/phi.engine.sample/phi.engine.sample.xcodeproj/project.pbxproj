@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -11,10 +11,8 @@
 		F03B89D72BCD548E004D61DA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F03B89D62BCD548E004D61DA /* ContentView.swift */; };
 		F03B89D92BCD548F004D61DA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F03B89D82BCD548F004D61DA /* Assets.xcassets */; };
 		F03B89DC2BCD548F004D61DA /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F03B89DB2BCD548F004D61DA /* Preview Assets.xcassets */; };
-		F052580A2C4834B600383A21 /* strathweb_phi_engine_framework.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = F05258092C4834B600383A21 /* strathweb_phi_engine_framework.xcframework */; };
-		F052580B2C4834B600383A21 /* strathweb_phi_engine_framework.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F05258092C4834B600383A21 /* strathweb_phi_engine_framework.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		F052580E2C54DFCB00383A21 /* Strathweb.Phi.Engine in Frameworks */ = {isa = PBXBuildFile; productRef = F052580D2C54DFCB00383A21 /* Strathweb.Phi.Engine */; };
 		F0DCBF052BCD7B8A004609F8 /* AiViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DCBF042BCD7B8A004609F8 /* AiViewModel.swift */; };
-		F0DCBF0C2BCD7C73004609F8 /* strathweb_phi_engine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0DCBF0B2BCD7C73004609F8 /* strathweb_phi_engine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,7 +22,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				F052580B2C4834B600383A21 /* strathweb_phi_engine_framework.xcframework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -37,10 +34,7 @@
 		F03B89D62BCD548E004D61DA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		F03B89D82BCD548F004D61DA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F03B89DB2BCD548F004D61DA /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		F05258092C4834B600383A21 /* strathweb_phi_engine_framework.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = strathweb_phi_engine_framework.xcframework; path = ../../../artifacts/swift/strathweb_phi_engine_framework.xcframework; sourceTree = "<group>"; };
 		F0DCBF042BCD7B8A004609F8 /* AiViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiViewModel.swift; sourceTree = "<group>"; };
-		F0DCBF0B2BCD7C73004609F8 /* strathweb_phi_engine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = strathweb_phi_engine.swift; path = "../../../strathweb-phi-engine/bindings/strathweb_phi_engine.swift"; sourceTree = "<group>"; };
-		F0DCBF0D2BCD7C9A004609F8 /* MetalPerformanceShaders.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalPerformanceShaders.framework; path = System/Library/Frameworks/MetalPerformanceShaders.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -48,7 +42,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F052580A2C4834B600383A21 /* strathweb_phi_engine_framework.xcframework in Frameworks */,
+				F052580E2C54DFCB00383A21 /* Strathweb.Phi.Engine in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -58,7 +52,6 @@
 		F03B89C82BCD548E004D61DA = {
 			isa = PBXGroup;
 			children = (
-				F0DCBF0B2BCD7C73004609F8 /* strathweb_phi_engine.swift */,
 				F03B89D32BCD548E004D61DA /* phi.engine.sample */,
 				F03B89D22BCD548E004D61DA /* Products */,
 				F0DCBF062BCD7BA2004609F8 /* Frameworks */,
@@ -93,15 +86,6 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
-		F0DCBF062BCD7BA2004609F8 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				F05258092C4834B600383A21 /* strathweb_phi_engine_framework.xcframework */,
-				F0DCBF0D2BCD7C9A004609F8 /* MetalPerformanceShaders.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -119,6 +103,9 @@
 			dependencies = (
 			);
 			name = phi.engine.sample;
+			packageProductDependencies = (
+				F052580D2C54DFCB00383A21 /* Strathweb.Phi.Engine */,
+			);
 			productName = phi.engine.sample;
 			productReference = F03B89D12BCD548E004D61DA /* phi.engine.sample.app */;
 			productType = "com.apple.product-type.application";
@@ -147,6 +134,9 @@
 				Base,
 			);
 			mainGroup = F03B89C82BCD548E004D61DA;
+			packageReferences = (
+				F052580C2C54DFCB00383A21 /* XCLocalSwiftPackageReference "../../../packages/swift/Strathweb.Phi.Engine" */,
+			);
 			productRefGroup = F03B89D22BCD548E004D61DA /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -175,7 +165,6 @@
 			files = (
 				F0DCBF052BCD7B8A004609F8 /* AiViewModel.swift in Sources */,
 				F03B89D72BCD548E004D61DA /* ContentView.swift in Sources */,
-				F0DCBF0C2BCD7C73004609F8 /* strathweb_phi_engine.swift in Sources */,
 				F03B89D52BCD548E004D61DA /* phi_engine_sampleApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -323,7 +312,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				OTHER_LDFLAGS = "-lc++";
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "strathweb.phi-engine-sample";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -353,7 +342,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				OTHER_LDFLAGS = "-lc++";
+				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "strathweb.phi-engine-sample";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -384,6 +373,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		F052580C2C54DFCB00383A21 /* XCLocalSwiftPackageReference "../../../packages/swift/Strathweb.Phi.Engine" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../../packages/swift/Strathweb.Phi.Engine;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F052580D2C54DFCB00383A21 /* Strathweb.Phi.Engine */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Strathweb.Phi.Engine;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F03B89C92BCD548E004D61DA /* Project object */;
 }

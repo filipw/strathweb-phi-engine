@@ -412,3 +412,6 @@ samples/python/jupyter/strathweb_phi_engine.py
 samples/python/jupyter/uniffi_strathweb_phi_engine.dll
 samples/python/console/strathweb_phi_engine.dll
 samples/python/jupyter/strathweb_phi_engine.dll
+packages/swift/Strathweb.Phi.Engine/.build
+packages/swift/Strathweb.Phi.Engine/Libs
+strathweb_phi_engine.swift
