@@ -3,7 +3,7 @@
 A cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally using [candle](https://github.com/huggingface/candle).
 
 Supported platforms:
- - Swift (Swift bindings + XCframework + native library .a/.dylib)
+ - Swift (Swift Package or Swift bindings + XCframework + native library .a/.dylib)
    - macOS (arm64)
    - iOS
  - .NET (NuGet package, C# bindings + native library as .dll, .so, .dylib)
@@ -22,9 +22,17 @@ Supported platforms:
 
 ### Swift
 
-Run `./build-xcframework.sh` to build the xcframework (arm64 Mac required).
+Build the Swift Package (arm64 Mac required).
 
-Then open `samples/io/phi.engine.sample/phi.engine.sample.xcodeproj` and build the SwiftUI app (iOS) or go to `samples/swift` and run `./run.sh` (macOS).
+```shell
+./build-swift.sh
+```
+
+This builds:
+ - the Swift Package under `packages/swift/Strathweb.Phi.Engine`
+ - XCFrameowkr under `artifacts/swift/strathweb_phi_engine_framework.xcframework`
+
+Now open `samples/io/phi.engine.sample/phi.engine.sample.xcodeproj` and build the SwiftUI app (iOS), or go to `samples/swift` and run `./run.sh` (macOS) to launch the Swift console app.
 
 ### C#
 
