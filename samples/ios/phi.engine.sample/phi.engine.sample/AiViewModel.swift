@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Strathweb_Phi_Engine
 
 class Phi3ViewModel: ObservableObject {
     var engine: StatefulPhiEngine?
