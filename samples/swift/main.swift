@@ -23,7 +23,7 @@ class ModelEventsHandler: PhiEventHandler {
 let modelBuilder = PhiEngineBuilder()
 try! modelBuilder.withEventHandler(eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler()))
 let gpuEnabled = try! modelBuilder.tryUseGpu()
-let model = try! modelBuilder.buildStateful(cacheDir: cacheDir, systemInstruction: "You are a hockey poet")
+let model = try! modelBuilder.buildStateful(cacheDir: cacheDir, systemInstruction: "You are a hockey poet. Be brief and polite.")
 
 // Run inference
 let result = try! model.runInference(promptText: "Write a haiku about ice hockey", inferenceOptions: inferenceOptions)
