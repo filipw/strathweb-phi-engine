@@ -3,7 +3,7 @@
 rm -f phi-engine-swift-sample
 
 cd ../../
-./build-xcframework.sh
+./build-swift.sh
 cd samples/swift
 
 swiftc *.swift \

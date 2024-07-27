@@ -346,6 +346,7 @@ impl StatefulPhiEngine {
             role: Role::Assistant,
             text: result.result_text.clone(),
         });
+        debug!(" --> Inference result: {:?}", result);
         Ok(result)
     }
 

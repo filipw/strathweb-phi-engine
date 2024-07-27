@@ -3,7 +3,6 @@ use candle_core::{Device, Tensor};
 use candle_transformers::generation::{LogitsProcessor, Sampling};
 use candle_transformers::models::quantized_phi3::ModelWeights as Phi3;
 use tracing::info;
-use std::io::Write;
 use std::sync::Arc;
 use tokenizers::Tokenizer;
 
@@ -129,7 +128,6 @@ impl TextGenerator {
                 || &next_token == assistant_token
             {
                 info!("Breaking due to end token: {}", next_token);
-                std::io::stdout().flush()?;
                 break;
             }
 
@@ -143,6 +141,17 @@ impl TextGenerator {
                 }
             }
             sampled += 1;
+        }
+
+        // we have ended to inference already, so try to still call the callback for the last token
+        if let Some(last_token) = tos.decode_rest()? {
+            if let Some(event_handler) = &self.event_handler {
+                event_handler.handler.on_inference_token(last_token).map_err(|e| {
+                    PhiError::InferenceError {
+                        error_text: e.to_string(),
+                    }
+                })?;
+            }
         }
 
         let dt = start_post_prompt.elapsed();
