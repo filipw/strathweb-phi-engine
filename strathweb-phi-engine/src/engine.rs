@@ -524,8 +524,7 @@ impl PhiEngine {
 
         let system_instruction = conversation_context.system_instruction.clone().unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
 
-        // Phi-3 has no system prompt so we inject it as a user prompt
-        let prompt_with_history = format!("<|user|>\nYour overall instructions are: {}<|end|>\n<|assistant|>Understood, I will adhere to these instructions<|end|>{}\n<|assistant|>\n", system_instruction, history_prompt);
+        let prompt_with_history = format!("<|system|>\n{}<|end|>\n<|assistant|>Understood, I will adhere to these instructions<|end|>{}\n<|assistant|>\n", system_instruction, history_prompt);
 
         let mut pipeline = TextGenerator::new(
             &self.model,

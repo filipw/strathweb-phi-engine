@@ -18,7 +18,7 @@ let package = Package(
             dependencies: ["Strathweb.Phi.Engine.FFI"],
             path: "Sources/Strathweb.Phi.Engine",
             linkerSettings: [
-                .linkedFramework("Metal", .when(platforms: [.macOS]))
+                .linkedFramework("Metal", .when(platforms: [.macOS])),
                 .linkedFramework("MetalPerformanceShaders", .when(platforms: [.macOS]))
             ]),
         .target(
