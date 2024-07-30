@@ -2,21 +2,13 @@
 
 A cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally using [candle](https://github.com/huggingface/candle).
 
-Supported platforms:
- - Swift (Swift Package or Swift bindings + XCframework + native library .a/.dylib)
-   - macOS (arm64)
-   - iOS
- - .NET (NuGet package, C# bindings + native library as .dll, .so, .dylib)
-   - Windows x64 & arm64
-   - Linux x64 & arm64
-   - macOS arm64
-- Kotlin (Kotlin bindings + native library as .so/.dylib)
-   - macOS arm64
-- Python 
- (Kotlin bindings + native library as .so/.dylib)
-   - Windows x64 & arm64
-   - Linux x64 & arm64
-   - macOS arm64
+## Supported platforms
+
+|                        | **Swift**                                        | **.NET**                                                                                    | **Kotlin**                        | **Python**                                                  |
+|------------------------|--------------------------------------------------|---------------------------------------------------------------------------------------------|-----------------------------------|-------------------------------------------------------------|
+| **Package**            | Swift Package                                    | Nuget                                                                                       | N/A                               | N/A                                                         |
+| **Manual Integration** | Bindings + XCFramework Bindings + native library | Bindings + native library                                                                   | Bindings + native library         | Bindings + native library                                   |
+| **Platforms**          | macOS arm64<br/>iOS                                  | Windows x64<br/>Windows arm64 (not via Nuget)<br/>Linux x64<br/>Linux arm64 (not via Nuget)<br/>macOS arm64 | Windows x64<br/>Linux x64<br/>macOS arm64 | Windows x64<br/>Windows arm64<br/>Linux x64<br/>Linux arm64<br/>macOS arm64 |
 
 ## Building instructions
 
