@@ -139,6 +139,8 @@ pub struct EngineOptions {
 
 pub trait PhiEventHandler: Send + Sync {
     fn on_model_loaded(&self) -> Result<(), PhiError>;
+    fn on_inference_started(&self) -> Result<(), PhiError>;
+    fn on_inference_ended(&self) -> Result<(), PhiError>;
     fn on_inference_token(&self, token: String) -> Result<(), PhiError>;
 }
 

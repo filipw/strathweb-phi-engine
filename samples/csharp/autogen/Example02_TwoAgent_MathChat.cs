@@ -5,15 +5,15 @@ using Role = AutoGen.Core.Role;
 
 namespace autogen.console;
 
-public static partial class Examples
+public partial class Examples
 {
-    public static async Task Example02_TwoAgent_MathChat(PhiEngine model)
+    public static async Task Example02_TwoAgent_MathChat(PhiEngine model, StreamingEventHandler handler)
     {
         // teacher agent - asks questions and checks answers
-        var teacher = new LocalPhiAgent("teacher", model,
+        var teacher = new LocalStreamingPhiAgent("teacher", model,
                 @"You are a teacher that asks a pre-school math question for student. Ask a question but do not provide the answer. As soon as student provides the answer, check the answer.
         If the answer is correct, praise the student and stop the conversation by saying [COMPLETE].
-        If the answer is wrong, you ask student to fix it.")
+        If the answer is wrong, you ask student to fix it.", handler)
             .RegisterMiddleware(async (msgs, option, agent, _) =>
             {
                 var reply = await agent.GenerateReplyAsync(msgs, option);
@@ -27,8 +27,8 @@ public static partial class Examples
             .RegisterPrintMessage();
 
         // student agent - answers the math questions
-        var student = new LocalPhiAgent("student", model,
-                "You are a student that answer question from teacher")
+        var student = new LocalStreamingPhiAgent("student", model,
+                "You are a student that answer question from teacher", handler)
             .RegisterPrintMessage();
 
         // start the conversation

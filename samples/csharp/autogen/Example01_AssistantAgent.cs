@@ -5,11 +5,11 @@ using Role = AutoGen.Core.Role;
 
 namespace autogen.console;
 
-public static partial class Examples
+public partial class Examples
 {
-    public static async Task Example01_AssistantAgent(PhiEngine model)
+    public static async Task Example01_AssistantAgent(PhiEngine model, StreamingEventHandler handler)
     {
-        var assistantAgent = new LocalPhiAgent("assistant", model, "You convert what user said to all uppercase.")
+        var assistantAgent = new LocalStreamingPhiAgent("assistant", model, "You convert what user said to all uppercase.", handler)
             .RegisterPrintMessage();
 
         var reply = await assistantAgent.SendAsync("hello world");

@@ -60,7 +60,13 @@ impl TextGenerator {
 
     // inference code adapted from https://github.com/huggingface/candle/blob/main/candle-examples/examples/quantized/main.rs
     pub fn run(&mut self, prompt: &str, sample_len: u16) -> Result<InferenceResult> {
-        //println!("{}", prompt);
+        if let Some(event_handler) = &self.event_handler {
+            event_handler.handler.on_inference_started().map_err(|e| {
+                PhiError::InferenceError {
+                    error_text: e.to_string(),
+                }
+            })?;
+        }
 
         let mut tos = TokenOutputStream::new(self.tokenizer.clone());
         let tokens = tos.tokenizer().encode(prompt, true).map_err(E::msg)?;
@@ -152,6 +158,14 @@ impl TextGenerator {
                     }
                 })?;
             }
+        }
+
+        if let Some(event_handler) = &self.event_handler {
+            event_handler.handler.on_inference_ended().map_err(|e| {
+                PhiError::InferenceError {
+                    error_text: e.to_string(),
+                }
+            })?;
         }
 
         let dt = start_post_prompt.elapsed();

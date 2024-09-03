@@ -1,39 +1,54 @@
+using System.Threading.Channels;
 using AutoGen.Core;
 using uniffi.strathweb_phi_engine;
 
 class LocalPhiAgent : IAgent
 {
-    private readonly PhiEngine _phiEngine;
+    protected readonly PhiEngine PhiEngine;
     private readonly string _systemInstruction;
 
     public string Name { get; }
 
     public LocalPhiAgent(string name, PhiEngine phiEngine, string systemInstruction)
     {
-        _phiEngine = phiEngine;
+        PhiEngine = phiEngine;
         Name = name;
         _systemInstruction = systemInstruction;
     }
 
-    public Task<IMessage> GenerateReplyAsync(IEnumerable<IMessage> messages, GenerateReplyOptions? options = null, CancellationToken cancellationToken = default)
+    public Task<IMessage> GenerateReplyAsync(IEnumerable<IMessage> messages, GenerateReplyOptions options = null, CancellationToken cancellationToken = default)
+    {
+        var prompt = GetCurrentPrompt(messages);
+        var conversationContext = GetConversationContext(messages);
+        var inferenceOptions = GetInferenceOptions(options);
+        
+        var response = PhiEngine.RunInference(prompt, conversationContext, inferenceOptions);
+        var textMessage = new TextMessage(AutoGen.Core.Role.Assistant, response.resultText, Name);
+        return Task.FromResult(textMessage as IMessage);
+    }
+
+    protected string GetCurrentPrompt(IEnumerable<IMessage> messages)
     {
         var tail = messages.Last();
-        var head = messages.Take(messages.Count() - 1);
-
         var prompt = tail.GetContent();
-        if (string.IsNullOrEmpty(prompt))
-        {
-            throw new ArgumentException("Prompt cannot be empty");
-        }
+        return prompt;
+    }
 
+    protected ConversationContext GetConversationContext(IEnumerable<IMessage> messages)
+    {
+        var head = messages.Take(messages.Count() - 1);
         var phiEngineMessages = head.Select(m => m switch
         {
             TextMessage message => message.ToConversationMessage(),
             _ => throw new ArgumentException($"Invalid message type: {m.GetType()}")
         }).ToList();
-
+    
         var context = new ConversationContext(phiEngineMessages, _systemInstruction);
+        return context;
+    }
 
+    protected InferenceOptions GetInferenceOptions(GenerateReplyOptions options)
+    {
         var inferenceOptionsBuilder = new InferenceOptionsBuilder();
         if (options != null)
         {
@@ -41,11 +56,80 @@ class LocalPhiAgent : IAgent
             {
                 inferenceOptionsBuilder.WithTemperature(options.Temperature.Value);
             }
-        }
-        var inferenceOptions = inferenceOptionsBuilder.Build();
 
-        var response = _phiEngine.RunInference(prompt, context, inferenceOptions);
-        var textMessage = new TextMessage(AutoGen.Core.Role.Assistant, response.resultText, Name);
-        return Task.FromResult(textMessage as IMessage);
+            if (options.MaxToken != null)
+            {
+                inferenceOptionsBuilder.WithTokenCount(Convert.ToUInt16(options.MaxToken.Value));
+            }
+        }
+    
+        var inferenceOptions = inferenceOptionsBuilder.Build();
+        return inferenceOptions;
+    }
+}
+
+class LocalStreamingPhiAgent : LocalPhiAgent, IStreamingAgent
+{
+    private readonly StreamingEventHandler _handler;
+
+    public LocalStreamingPhiAgent(string name, PhiEngine phiEngine, string systemInstruction, StreamingEventHandler handler) : base(name, phiEngine, systemInstruction)
+    {
+        _handler = handler;
+    }
+    
+    public async IAsyncEnumerable<IMessage> GenerateStreamingReplyAsync(IEnumerable<IMessage> messages,
+        GenerateReplyOptions options = null,
+        CancellationToken cancellationToken = new CancellationToken())
+    {
+        var prompt = GetCurrentPrompt(messages);
+        var conversationContext = GetConversationContext(messages);
+        var inferenceOptions = GetInferenceOptions(options);
+        
+        Task.Run(() =>
+        {
+            var response = PhiEngine.RunInference(prompt, conversationContext, inferenceOptions);
+        });
+        
+        await foreach (var token in _handler.GetInferenceTokensAsync().WithCancellation(cancellationToken))
+        {
+            yield return new TextMessageUpdate(AutoGen.Core.Role.Assistant, token, from: Name);
+        }
+    }
+}
+
+public class StreamingEventHandler : PhiEventHandler
+{
+    private Channel<string> _tokenChannel;
+    private TaskCompletionSource<bool> _inferenceStartedTcs = new();
+
+    public void OnInferenceToken(string token)
+    {
+        _tokenChannel?.Writer.TryWrite(token);
+        _inferenceStartedTcs.TrySetResult(true);
+    }
+
+    public void OnInferenceStarted()
+    {
+        _tokenChannel = Channel.CreateUnbounded<string>();
+    }
+
+    public void OnInferenceEnded()
+    {
+        _tokenChannel?.Writer.Complete();
+        _tokenChannel = null;
+        _inferenceStartedTcs = new TaskCompletionSource<bool>();
+    }
+
+    public void OnModelLoaded()
+    {
+    }
+
+    public async IAsyncEnumerable<string> GetInferenceTokensAsync()
+    {
+        await _inferenceStartedTcs.Task;
+        await foreach (var token in _tokenChannel.Reader.ReadAllAsync())
+        {
+            yield return token;
+        }
     }
 }

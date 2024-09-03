@@ -4,11 +4,10 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-      <PackageReference Include="Strathweb.Phi.Engine" Version="0.1.0" />
+      <PackageReference Include="Strathweb.Phi.Engine" Version="0.1.1" />
       <PackageReference Include="AutoGen" Version="0.1.0" />
       <PackageReference Include="FluentAssertions" Version="6.12.0" />
       <PackageReference Include="System.Text.Json" Version="8.0.4" />
