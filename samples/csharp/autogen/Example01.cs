@@ -7,6 +7,8 @@ namespace autogen.console;
 
 public partial class Examples
 {
+    // AutoGen example from
+    // https://github.com/microsoft/autogen/blob/main/dotnet/sample/AutoGen.BasicSamples/Example01_AssistantAgent.cs
     public static async Task Example01_AssistantAgent(PhiEngine model, StreamingEventHandler handler)
     {
         var assistantAgent = new LocalStreamingPhiAgent("assistant", model, "You convert what user said to all uppercase.", handler)

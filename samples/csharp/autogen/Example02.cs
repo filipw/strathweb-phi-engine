@@ -7,6 +7,8 @@ namespace autogen.console;
 
 public partial class Examples
 {
+    // AutoGen example from
+    // https://github.com/microsoft/autogen/blob/main/dotnet/sample/AutoGen.BasicSamples/Example02_TwoAgent_MathChat.cs
     public static async Task Example02_TwoAgent_MathChat(PhiEngine model, StreamingEventHandler handler)
     {
         // teacher agent - asks questions and checks answers

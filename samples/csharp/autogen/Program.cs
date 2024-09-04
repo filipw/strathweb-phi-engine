@@ -14,16 +14,19 @@ var demo = AnsiConsole.Prompt(
         .Title("Choose the [green]demo[/] to run?")
         .AddChoices(new[]
         {
-            "Assistant Agent", "Two Agent Math Chat"
+            "Basic Assistant Agent", "Two Agent Math Chat", "Sequential Chat and Customer Onboarding"
         }));
 
 switch (demo)
 {
-    case "Assistant Agent":
+    case "Basic Assistant Agent":
         await Examples.Example01_AssistantAgent(model, handler);
         break;
     case "Two Agent Math Chat":
         await Examples.Example02_TwoAgent_MathChat(model, handler);
+        break;
+    case "Sequential Chat and Customer Onboarding":
+        await Examples.Example03_Sequential_Chat_and_Customer_Onboarding(model, handler);
         break;
     default:
         Console.WriteLine("Nothing selected!");

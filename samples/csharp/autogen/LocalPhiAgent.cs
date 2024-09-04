@@ -68,35 +68,6 @@ class LocalPhiAgent : IAgent
     }
 }
 
-class LocalStreamingPhiAgent : LocalPhiAgent, IStreamingAgent
-{
-    private readonly StreamingEventHandler _handler;
-
-    public LocalStreamingPhiAgent(string name, PhiEngine phiEngine, string systemInstruction, StreamingEventHandler handler) : base(name, phiEngine, systemInstruction)
-    {
-        _handler = handler;
-    }
-    
-    public async IAsyncEnumerable<IMessage> GenerateStreamingReplyAsync(IEnumerable<IMessage> messages,
-        GenerateReplyOptions options = null,
-        CancellationToken cancellationToken = new CancellationToken())
-    {
-        var prompt = GetCurrentPrompt(messages);
-        var conversationContext = GetConversationContext(messages);
-        var inferenceOptions = GetInferenceOptions(options);
-        
-        Task.Run(() =>
-        {
-            var response = PhiEngine.RunInference(prompt, conversationContext, inferenceOptions);
-        });
-        
-        await foreach (var token in _handler.GetInferenceTokensAsync().WithCancellation(cancellationToken))
-        {
-            yield return new TextMessageUpdate(AutoGen.Core.Role.Assistant, token, from: Name);
-        }
-    }
-}
-
 public class StreamingEventHandler : PhiEventHandler
 {
     private Channel<string> _tokenChannel;
@@ -105,12 +76,12 @@ public class StreamingEventHandler : PhiEventHandler
     public void OnInferenceToken(string token)
     {
         _tokenChannel?.Writer.TryWrite(token);
-        _inferenceStartedTcs.TrySetResult(true);
     }
 
     public void OnInferenceStarted()
     {
         _tokenChannel = Channel.CreateUnbounded<string>();
+        _inferenceStartedTcs.TrySetResult(true);
     }
 
     public void OnInferenceEnded()
