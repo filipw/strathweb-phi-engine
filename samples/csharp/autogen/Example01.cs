@@ -30,6 +30,7 @@ public partial class Examples
         reply.GetContent().Should().Be("HELLO WORLD AGAIN");
         
         // expected output:
+        //
         // TextMessage from assistant
         // --------------------
         // HELLO WORLD

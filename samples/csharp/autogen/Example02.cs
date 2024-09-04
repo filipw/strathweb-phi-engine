@@ -15,11 +15,11 @@ public partial class Examples
         var teacher = new LocalStreamingPhiAgent("teacher", model,
                 @"You are a teacher that asks a pre-school math question for student. Ask a question but do not provide the answer. As soon as student provides the answer, check the answer.
         If the answer is correct, praise the student and stop the conversation by saying [COMPLETE].
-        If the answer is wrong, you ask student to fix it.", handler)
+        If the answer is wrong, you ask student to fix it. Do not ask a new question.", handler)
             .RegisterMiddleware(async (msgs, option, agent, _) =>
             {
                 var reply = await agent.GenerateReplyAsync(msgs, option);
-                if (reply.GetContent()?.ToLower().Contains("[complete]") is true)
+                if (reply.GetContent()?.ToLower().Contains("complete") is true)
                 {
                     return new TextMessage(Role.Assistant, GroupChatExtension.TERMINATE, from: reply.From);
                 }
@@ -30,7 +30,7 @@ public partial class Examples
 
         // student agent - answers the math questions
         var student = new LocalStreamingPhiAgent("student", model,
-                "You are a student that answer question from teacher", handler)
+                "You are a student that answers questions from teacher", handler)
             .RegisterPrintMessage();
 
         // start the conversation
@@ -39,7 +39,8 @@ public partial class Examples
             message: "Hey teacher, please create a math question for me.",
             maxRound: 10);
 
-        // expected output
+        // sample output:
+        //
         // TextMessage from teacher
         // --------------------
         // Great! Here's a question for you: 

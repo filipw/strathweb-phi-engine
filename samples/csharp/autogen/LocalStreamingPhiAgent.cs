@@ -1,4 +1,5 @@
 using AutoGen.Core;
+using System.Runtime.CompilerServices;
 using uniffi.strathweb_phi_engine;
 
 class LocalStreamingPhiAgent : LocalPhiAgent, IStreamingAgent
@@ -12,13 +13,14 @@ class LocalStreamingPhiAgent : LocalPhiAgent, IStreamingAgent
     
     public async IAsyncEnumerable<IMessage> GenerateStreamingReplyAsync(IEnumerable<IMessage> messages,
         GenerateReplyOptions options = null,
-        CancellationToken cancellationToken = new CancellationToken())
+         [EnumeratorCancellation]CancellationToken cancellationToken = new CancellationToken())
     {
         var prompt = GetCurrentPrompt(messages);
         var conversationContext = GetConversationContext(messages);
         var inferenceOptions = GetInferenceOptions(options);
         
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+#pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         Task.Run(() =>
         {
             try
@@ -31,7 +33,8 @@ class LocalStreamingPhiAgent : LocalPhiAgent, IStreamingAgent
                 throw;
             }
         }, cts.Token);
-        
+#pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
+
         await foreach (var token in _handler.GetInferenceTokensAsync().WithCancellation(cts.Token))
         {
             yield return new TextMessageUpdate(AutoGen.Core.Role.Assistant, token, from: Name);

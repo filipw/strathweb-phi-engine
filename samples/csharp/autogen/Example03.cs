@@ -122,7 +122,7 @@ public partial class Examples
         // Keep summarizing
         summary = await summarizer.SendAsync(chatHistory: new[] { summary }.Concat(conversation));
         
-        // sample output
+        // sample output:
         //
         // from: User
         // Hello! I'm John, and I live in New York. I'm interested in learning more about the fun aspects of your product. Could you provide some information about that?
