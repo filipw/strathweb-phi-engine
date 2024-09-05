@@ -124,6 +124,12 @@ callback interface PhiEventHandler {
 
     [Throws=PhiError]
     void on_inference_token(string token);
+
+    [Throws=PhiError]
+    void on_inference_started();
+
+    [Throws=PhiError]
+    void on_inference_ended();
 };
 
 interface BoxedPhiEventHandler {

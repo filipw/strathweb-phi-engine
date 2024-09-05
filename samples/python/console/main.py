@@ -13,6 +13,12 @@ class ModelEventsHandler(PhiEventHandler):
     def on_inference_token(self, token: str):
         print(token, end="")
 
+    def on_inference_started(self):
+        pass
+
+    def on_inference_ended(self):
+        pass
+
     def on_model_loaded(self):
         print("""
  🧠 Model loaded!

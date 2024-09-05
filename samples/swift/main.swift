@@ -8,6 +8,10 @@ let inferenceOptions = try! inferenceOptionsBuilder.build()
 let cacheDir = FileManager.default.currentDirectoryPath.appending("/.cache")
 
 class ModelEventsHandler: PhiEventHandler {
+    func onInferenceStarted() {}
+
+    func onInferenceEnded() {}
+
     func onInferenceToken(token: String) {
         print(token, terminator: "")
     }

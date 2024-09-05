@@ -22,7 +22,7 @@ Build the Swift Package (arm64 Mac required).
 
 This builds:
  - the Swift Package under `packages/swift/Strathweb.Phi.Engine`
- - XCFrameowkr under `artifacts/swift/strathweb_phi_engine_framework.xcframework`
+ - XCFramework under `artifacts/swift/strathweb_phi_engine_framework.xcframework`
 
 Now open `samples/io/phi.engine.sample/phi.engine.sample.xcodeproj` and build the SwiftUI app (iOS), or go to `samples/swift` and run `./run.sh` (macOS) to launch the Swift console app.
 
@@ -40,12 +40,18 @@ Build the Nuget package for your platform:
 ./build-dotnet.sh
 ```
 
+or (on Windows)
+
+```cmd
+build-dotnet.bat
+ ```
+
 or
 
 ```shell
 cargo build --release --manifest-path strathweb-phi-engine/Cargo.toml
-dotnet build packages/csharp/Strathweb.Phi.Engine -c Release
-dotnet pack packages/csharp/Strathweb.Phi.Engine -c Release -o artifacts/csharp
+dotnet build packages/csharp -c Release
+dotnet pack packages/csharp -c Release -o artifacts/csharp
 ```
 
 Nuget package will be in `artifacts/csharp/Strathweb.Phi.Engine.0.1.0.nupkg`.
@@ -118,6 +124,12 @@ However, for 4GB RAM iPhones, it's possible to use the (very) low fidelity Q2_K 
 ✅ Tested on Windows arm64
 
 ✅ Tested on macOS arm64. Supports Metal.
+
+## AutoGen
+
+The repository also contains a C# integration library for [AutoGen](https://github.com/microsoft/autogen/tree/dotnet/dotnet), called `Strathweb.Phi.Engine.AutoGen`. There is an example in the `samples/csharp/autogen` folder. It allows creating a local Phi-3 agent and integrating it into the other typical AutoGen workflows.
+
+The NuGet package is built when running `./build-dotnet.sh` (`build-dotnet.bat` on Windows).
 
 ## Blog post
 

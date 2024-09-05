@@ -104,13 +104,18 @@ jobs:
         cp artifacts/macos/*.dylib packages/csharp/Strathweb.Phi.Engine/runtimes/osx-arm64/native/
         cp artifacts/windows/*.dll packages/csharp/Strathweb.Phi.Engine/runtimes/win-x64/native/
         cp artifacts/bindings/*.cs packages/csharp/Strathweb.Phi.Engine/
-    - name: Build NuGet package
+    - name: Build NuGet packages
       run: |
-        cd packages/csharp/Strathweb.Phi.Engine
+        cd packages/csharp
         dotnet build -c Release
         dotnet pack -c Release
-    - name: Upload NuGet package
+    - name: Upload NuGet package (Strathweb.Phi.Engine)
       uses: actions/upload-artifact@v3
       with:
         name: strathweb_phi_engine_nuget_package
         path: packages/csharp/Strathweb.Phi.Engine/bin/Release/*.nupkg
+    - name: Upload NuGet package (Strathweb.Phi.Engine.AutoGen)
+      uses: actions/upload-artifact@v3
+      with:
+        name: strathweb_phi_engine_nuget_package
+        path: packages/csharp/Strathweb.Phi.Engine.AutoGen/bin/Release/*.nupkg

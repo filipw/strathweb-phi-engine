@@ -1,6 +1,8 @@
 [bindings.csharp]
+namespace = "Strathweb.Phi.Engine"
 cdylib_name = "strathweb_phi_engine"
 access_modifier = "public"
+global_methods_class_name = "GlobalPhiEngine"
 
 [bindings.kotlin]
 package_name = "strathweb.phi.engine"
