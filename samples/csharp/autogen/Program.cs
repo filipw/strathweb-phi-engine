@@ -1,6 +1,7 @@
 ﻿using Spectre.Console;
-using uniffi.strathweb_phi_engine;
 using autogen.console;
+using Strathweb.Phi.Engine.AutoGen;
+using Strathweb.Phi.Engine;
 
 var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), ".cache");
 

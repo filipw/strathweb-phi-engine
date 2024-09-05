@@ -1,8 +1,11 @@
-using AutoGen.Core;
+﻿using AutoGen.Core;
 using System.Runtime.CompilerServices;
-using uniffi.strathweb_phi_engine;
+using Strathweb.Phi.Engine;
+using AutoGenRole = AutoGen.Core.Role;
 
-class LocalStreamingPhiAgent : LocalPhiAgent, IStreamingAgent
+namespace Strathweb.Phi.Engine.AutoGen;
+
+public class LocalStreamingPhiAgent : LocalPhiAgent, IStreamingAgent
 {
     private readonly StreamingEventHandler _handler;
 
@@ -10,15 +13,15 @@ class LocalStreamingPhiAgent : LocalPhiAgent, IStreamingAgent
     {
         _handler = handler;
     }
-    
+
     public async IAsyncEnumerable<IMessage> GenerateStreamingReplyAsync(IEnumerable<IMessage> messages,
         GenerateReplyOptions options = null,
-         [EnumeratorCancellation]CancellationToken cancellationToken = new CancellationToken())
+         [EnumeratorCancellation] CancellationToken cancellationToken = new CancellationToken())
     {
         var prompt = GetCurrentPrompt(messages);
         var conversationContext = GetConversationContext(messages);
         var inferenceOptions = GetInferenceOptions(options);
-        
+
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         Task.Run(() =>
@@ -37,7 +40,7 @@ class LocalStreamingPhiAgent : LocalPhiAgent, IStreamingAgent
 
         await foreach (var token in _handler.GetInferenceTokensAsync().WithCancellation(cts.Token))
         {
-            yield return new TextMessageUpdate(AutoGen.Core.Role.Assistant, token, from: Name);
+            yield return new TextMessageUpdate(AutoGenRole.Assistant, token, from: Name);
         }
     }
 }

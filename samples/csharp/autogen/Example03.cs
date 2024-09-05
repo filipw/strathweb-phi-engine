@@ -1,7 +1,7 @@
 using AutoGen.Core;
-using FluentAssertions;
-using uniffi.strathweb_phi_engine;
-using Role = AutoGen.Core.Role;
+using Strathweb.Phi.Engine;
+using Strathweb.Phi.Engine.AutoGen;
+using AutoGenRole = AutoGen.Core.Role;
 
 namespace autogen.console;
 
@@ -73,7 +73,7 @@ public partial class Examples
 
         // Task 1. Onboard customer by gathering name and location
         // (onboard_personal_information_agent -> user .. (repeat less than two times)) -> summarizer
-        var greetingMessage = new TextMessage(Role.Assistant, """
+        var greetingMessage = new TextMessage(AutoGenRole.Assistant, """
                                                               Hello, I'm here to help you get started with our product.
                                                               Could you tell me your name and location?
                                                               """, from: onboardingPersonalInformationAgent.Name);
@@ -92,7 +92,7 @@ public partial class Examples
 
         // Task 2. Gapther customer's preferences on news topics
         // (onboarding_topic_preference_agent -> user .. (repeat one time)) -> summarizer
-        var topicPreferenceMessage = new TextMessage(Role.Assistant, """
+        var topicPreferenceMessage = new TextMessage(AutoGenRole.Assistant, """
                                                                      Great! Could you tell me what topics you are interested in reading about?
                                                                      """, from: onboardingTopicPreferenceAgent.Name);
 
@@ -107,7 +107,7 @@ public partial class Examples
 
         // Task 3. Engage the customer with fun facts, jokes, or interesting stories based on the user's personal information and topic preferences
         // (user(find fun thing to read) -> customerEngagementAgent .. (repeat 1 time)) -> summarizer
-        var funFactMessage = new TextMessage(Role.User, """
+        var funFactMessage = new TextMessage(AutoGenRole.User, """
                                                         Let's find something fun to read.
                                                         """, from: user.Name);
 

@@ -1,18 +1,21 @@
-using AutoGen.Core;
-using uniffi.strathweb_phi_engine;
+﻿using AutoGen.Core;
+using Strathweb.Phi.Engine;
+using AutoGenRole = AutoGen.Core.Role;
+
+namespace Strathweb.Phi.Engine.AutoGen;
 
 public static class IMessageExtensions
 {
     public static ConversationMessage ToConversationMessage(this TextMessage message)
     {
-        uniffi.strathweb_phi_engine.Role? role = null;
-        if (message.Role == AutoGen.Core.Role.User)
+        Role? role = null;
+        if (message.Role == AutoGenRole.User)
         {
-            role = uniffi.strathweb_phi_engine.Role.User;
+            role = Role.User;
         }
-        else if (message.Role == AutoGen.Core.Role.Assistant)
+        else if (message.Role == AutoGenRole.Assistant)
         {
-            role = uniffi.strathweb_phi_engine.Role.Assistant;
+            role = Role.Assistant;
         }
 
         if (role == null)

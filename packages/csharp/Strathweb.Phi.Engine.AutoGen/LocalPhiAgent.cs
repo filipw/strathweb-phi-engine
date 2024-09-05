@@ -1,8 +1,10 @@
-using System.Threading.Channels;
-using AutoGen.Core;
-using uniffi.strathweb_phi_engine;
+﻿using AutoGen.Core;
+using AutoGenRole = AutoGen.Core.Role;
+using Strathweb.Phi.Engine;
 
-class LocalPhiAgent : IAgent
+namespace Strathweb.Phi.Engine.AutoGen;
+
+public class LocalPhiAgent : IAgent
 {
     protected readonly PhiEngine PhiEngine;
     private readonly string _systemInstruction;
@@ -21,9 +23,9 @@ class LocalPhiAgent : IAgent
         var prompt = GetCurrentPrompt(messages);
         var conversationContext = GetConversationContext(messages);
         var inferenceOptions = GetInferenceOptions(options);
-        
+
         var response = PhiEngine.RunInference(prompt, conversationContext, inferenceOptions);
-        var textMessage = new TextMessage(AutoGen.Core.Role.Assistant, response.resultText, Name);
+        var textMessage = new TextMessage(AutoGenRole.Assistant, response.resultText, Name);
         return Task.FromResult(textMessage as IMessage);
     }
 
@@ -42,7 +44,7 @@ class LocalPhiAgent : IAgent
             TextMessage message => message.ToConversationMessage(),
             _ => throw new ArgumentException($"Invalid message type: {m.GetType()}")
         }).ToList();
-    
+
         var context = new ConversationContext(phiEngineMessages, _systemInstruction);
         return context;
     }
@@ -62,45 +64,8 @@ class LocalPhiAgent : IAgent
                 inferenceOptionsBuilder.WithTokenCount(Convert.ToUInt16(options.MaxToken.Value));
             }
         }
-    
+
         var inferenceOptions = inferenceOptionsBuilder.Build();
         return inferenceOptions;
-    }
-}
-
-public class StreamingEventHandler : PhiEventHandler
-{
-    private Channel<string> _tokenChannel;
-    private TaskCompletionSource<bool> _inferenceStartedTcs = new();
-
-    public void OnInferenceToken(string token)
-    {
-        _tokenChannel?.Writer.TryWrite(token);
-    }
-
-    public void OnInferenceStarted()
-    {
-        _tokenChannel = Channel.CreateUnbounded<string>();
-        _inferenceStartedTcs.TrySetResult(true);
-    }
-
-    public void OnInferenceEnded()
-    {
-        _tokenChannel?.Writer.Complete();
-        _tokenChannel = null;
-        _inferenceStartedTcs = new TaskCompletionSource<bool>();
-    }
-
-    public void OnModelLoaded()
-    {
-    }
-
-    public async IAsyncEnumerable<string> GetInferenceTokensAsync()
-    {
-        await _inferenceStartedTcs.Task;
-        await foreach (var token in _tokenChannel.Reader.ReadAllAsync())
-        {
-            yield return token;
-        }
     }
 }

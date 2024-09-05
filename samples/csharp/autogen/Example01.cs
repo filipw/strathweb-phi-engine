@@ -1,7 +1,7 @@
 using AutoGen.Core;
 using FluentAssertions;
-using uniffi.strathweb_phi_engine;
-using Role = AutoGen.Core.Role;
+using Strathweb.Phi.Engine;
+using Strathweb.Phi.Engine.AutoGen;
 
 namespace autogen.console;
 
