@@ -404,6 +404,7 @@ samples/ios/phi.engine.sample/phi.engine.sample/strathweb_phi_engine_framework.x
 *.xcuserstate
 phi-engine-swift-sample
 samples/kotlin/out
+samples/kotlin/deps
 strathweb_phi_engine.cs
 packages/csharp/Strathweb.Phi.Engine/runtimes
 samples/python/console/strathweb_phi_engine.py

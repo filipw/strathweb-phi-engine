@@ -64,6 +64,10 @@ class Phi3ViewModel: ObservableObject {
         init(parent: Phi3ViewModel) {
             self.parent = parent
         }
+
+        func onInferenceStarted() {}
+
+        func onInferenceEnded() {}
         
         func onInferenceToken(token: String) throws {
             DispatchQueue.main.async {

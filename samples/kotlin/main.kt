@@ -13,6 +13,10 @@ fun main(args: Array<String>) {
     val cacheDir = File(System.getProperty("user.dir"), ".cache").absolutePath
 
     class ModelEventsHandler : PhiEventHandler {
+        override fun onInferenceStarted() {}
+        
+        override fun onInferenceEnded() {}
+
         override fun onInferenceToken(token: String) {
             print(token)
         }
