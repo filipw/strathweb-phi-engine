@@ -1,6 +1,6 @@
-﻿using uniffi.strathweb_phi_engine;
+﻿using Strathweb.Phi.Engine;
 
-StrathwebPhiEngineMethods.EnableTracing();
+GlobalPhiEngine.EnableTracing();
 
 var inferenceOptionsBuilder = new InferenceOptionsBuilder();
 inferenceOptionsBuilder.WithTemperature(0.9);
@@ -18,6 +18,14 @@ Console.WriteLine($"{Environment.NewLine}Tokens Generated: {result.tokenCount}{E
 
 class ModelEventsHandler : PhiEventHandler
 {
+    public void OnInferenceEnded()
+    {
+    }
+
+    public void OnInferenceStarted()
+    {
+    }
+
     public void OnInferenceToken(string token)
     {
         Console.Write(token);

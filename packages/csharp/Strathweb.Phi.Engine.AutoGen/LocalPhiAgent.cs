@@ -7,15 +7,17 @@ namespace Strathweb.Phi.Engine.AutoGen;
 public class LocalPhiAgent : IAgent
 {
     protected readonly PhiEngine PhiEngine;
+    protected readonly InferenceOptions InferenceOptions;
     private readonly string _systemInstruction;
 
     public string Name { get; }
 
-    public LocalPhiAgent(string name, PhiEngine phiEngine, string systemInstruction)
+    public LocalPhiAgent(string name, PhiEngine phiEngine, string systemInstruction, InferenceOptions inferenceOptions = null)
     {
         PhiEngine = phiEngine;
         Name = name;
         _systemInstruction = systemInstruction;
+        InferenceOptions = inferenceOptions ?? new InferenceOptionsBuilder().Build();
     }
 
     public Task<IMessage> GenerateReplyAsync(IEnumerable<IMessage> messages, GenerateReplyOptions options = null, CancellationToken cancellationToken = default)
@@ -51,9 +53,11 @@ public class LocalPhiAgent : IAgent
 
     protected InferenceOptions GetInferenceOptions(GenerateReplyOptions options)
     {
-        var inferenceOptionsBuilder = new InferenceOptionsBuilder();
         if (options != null)
         {
+            var inferenceOptionsBuilder = new InferenceOptionsBuilder();
+            inferenceOptionsBuilder.FromInferenceOptions(InferenceOptions);
+
             if (options.Temperature != null)
             {
                 inferenceOptionsBuilder.WithTemperature(options.Temperature.Value);
@@ -63,9 +67,11 @@ public class LocalPhiAgent : IAgent
             {
                 inferenceOptionsBuilder.WithTokenCount(Convert.ToUInt16(options.MaxToken.Value));
             }
+
+            var inferenceOptions = inferenceOptionsBuilder.Build();
+            return inferenceOptions;
         }
 
-        var inferenceOptions = inferenceOptionsBuilder.Build();
-        return inferenceOptions;
+        return InferenceOptions;
     }
 }

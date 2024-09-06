@@ -8,7 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-      <PackageReference Include="Strathweb.Phi.Engine" Version="0.1.0" />
+    <!-- note: this is intentionally referencing the library via the nuget package: to test it, and to take advantage of the native assets there -->
+    <PackageReference Include="Strathweb.Phi.Engine" Version="0.1.2" />
   </ItemGroup>
+
+  <!-- only use the below if you know what you are doing (e.g. the native assets have to provided by hand or by extra copy task) -->
+  <!--<ItemGroup>
+    <ProjectReference Include="..\..\..\packages\csharp\Strathweb.Phi.Engine\Strathweb.Phi.Engine.csproj" />
+  </ItemGroup>-->
 
 </Project>
