@@ -9,7 +9,7 @@ public class LocalStreamingPhiAgent : LocalPhiAgent, IStreamingAgent
 {
     private readonly StreamingEventHandler _handler;
 
-    public LocalStreamingPhiAgent(string name, PhiEngine phiEngine, string systemInstruction, StreamingEventHandler handler) : base(name, phiEngine, systemInstruction)
+    public LocalStreamingPhiAgent(string name, PhiEngine phiEngine, string systemInstruction, StreamingEventHandler handler, InferenceOptions inferenceOptions = null) : base(name, phiEngine, systemInstruction, inferenceOptions)
     {
         _handler = handler;
     }

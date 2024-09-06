@@ -26,3 +26,27 @@ public static class IMessageExtensions
         return new ConversationMessage(role.Value, message.Content);
     }
 }
+
+static class InferenceOptionsBuilderExtensions
+{
+    public static InferenceOptionsBuilder FromInferenceOptions(this InferenceOptionsBuilder builder, InferenceOptions options)
+    {
+        builder.WithTemperature(options.temperature);
+        builder.WithTokenCount(options.tokenCount);
+
+        if (options.topP != null)
+        {
+            builder.WithTopP(options.topP.Value);
+        }
+
+        if (options.topK != null)
+        {
+            builder.WithTopK(options.topK.Value);
+        }
+        builder.WithRepeatPenalty(options.repeatPenalty);
+        builder.WithRepeatLastN(options.repeatLastN);
+        builder.WithSeed(options.seed);
+
+        return builder;
+    }
+}
