@@ -1,7 +1,9 @@
 use anyhow::{Error as E, Result};
 use candle_core::quantized::gguf_file;
-use candle_core::Device;
-use candle_transformers::models::quantized_phi3::ModelWeights as Phi3;
+use candle_core::{DType, Device};
+use candle_nn::VarBuilder;
+use candle_transformers::models::quantized_phi3::ModelWeights as QuantizedPhi3;
+use candle_transformers::models::phi3::{Config as Phi3Config, Model as Phi3};
 use hf_hub::api::sync::ApiBuilder;
 use hf_hub::Repo;
 use std::fs::File;
@@ -135,6 +137,7 @@ pub struct EngineOptions {
     pub use_flash_attention: bool,
     pub context_window: Option<u16>,
     pub use_gpu: bool,
+    pub dtype: Option<String>,
 }
 
 pub trait PhiEventHandler: Send + Sync {
@@ -230,6 +233,7 @@ impl PhiEngineBuilder {
             use_flash_attention: inner.use_flash_attention,
             context_window: inner.context_window.clone(),
             use_gpu: inner.use_gpu,
+            dtype: Some("bf16".to_string()),
         };
         PhiEngine::new(engine_options, inner.event_handler.clone()).map(|engine| Arc::new(engine))
     }
@@ -249,6 +253,7 @@ impl PhiEngineBuilder {
             use_flash_attention: inner.use_flash_attention,
             context_window: inner.context_window.clone(),
             use_gpu: inner.use_gpu,
+            dtype: Some("bf16".to_string()),
         };
 
         let conversation_context = ConversationContext {
@@ -281,7 +286,7 @@ impl PhiEngineBuilderInner {
                 tokenizer_repo: "microsoft/Phi-3-mini-4k-instruct".to_string(),
                 tokenizer_file_name: "tokenizer.json".to_string(),
             },
-            model_provider: PhiModelProvider::HuggingFace {
+            model_provider: PhiModelProvider::HuggingFaceGguf {
                 model_repo: "microsoft/Phi-3-mini-4k-instruct-gguf".to_string(),
                 model_file_name: "Phi-3-mini-4k-instruct-q4.gguf".to_string(),
                 model_revision: "main".to_string(),
@@ -297,12 +302,19 @@ impl PhiEngineBuilderInner {
 pub enum PhiModelProvider {
     HuggingFace {
         model_repo: String,
+        model_revision: String,
+    },
+    HuggingFaceGguf {
+        model_repo: String,
         model_file_name: String,
         model_revision: String,
     },
     FileSystem {
         model_path: String,
     },
+    // FileSystemGguf {
+    //     model_path: String,
+    // },
 }
 
 #[derive(Debug, Clone)]
@@ -374,8 +386,14 @@ impl StatefulPhiEngine {
     }
 }
 
+#[derive(Clone)]
+pub enum Model {
+    Standard(Phi3),
+    Quantized(QuantizedPhi3),
+}
+
 pub struct PhiEngine {
-    pub model: Phi3,
+    pub model: Model,
     pub tokenizer: Tokenizer,
     pub device: Device,
     pub event_handler: Option<Arc<BoxedPhiEventHandler>>,
@@ -397,8 +415,44 @@ impl PhiEngine {
             Device::Cpu
         };
 
-        let model_path = match engine_options.model_provider {
+        let (files, is_gguf, config) = match engine_options.model_provider {
             PhiModelProvider::HuggingFace {
+                model_repo,
+                model_revision,
+            } => {
+                let api_builder = ApiBuilder::new()
+                    .with_cache_dir(PathBuf::from(engine_options.cache_dir.clone()));
+                let api = api_builder
+                    .build()
+                    .map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
+                let repo = Repo::with_revision(
+                    model_repo.to_string(),
+                    hf_hub::RepoType::Model,
+                    model_revision,
+                );
+                let api = api.repo(repo);
+                let files = hub_load_safetensors(
+                    &api,
+                    "model.safetensors.index.json",
+                )?;
+
+                debug!("Loaded model files: {:?}", files);
+
+                let config_filename = api.get("config.json").map_err(|e| PhiError::InitalizationError {
+                    error_text: e.to_string(),
+                })?;
+                let config = std::fs::read_to_string(config_filename).map_err(|e| PhiError::InitalizationError {
+                    error_text: e.to_string(),
+                })?;
+                let config: Phi3Config = serde_json::from_str(&config).map_err(|e| PhiError::InitalizationError {
+                    error_text: e.to_string(),
+                })?;
+                debug!("Loaded model config: {:?}", config);
+                (files, false, Some(config))
+            }
+            PhiModelProvider::HuggingFaceGguf {
                 model_repo,
                 model_file_name,
                 model_revision,
@@ -422,9 +476,9 @@ impl PhiEngine {
                     }
                 })?;
                 debug!(" --> Downloaded model to {:?}...", model_path);
-                model_path
+                (vec![model_path], true, None)
             }
-            PhiModelProvider::FileSystem { model_path } => model_path.into(),
+            PhiModelProvider::FileSystem { model_path } => (vec![model_path.into()], true, None),
         };
 
         let tokenizer_path = match engine_options.tokenizer_provider {
@@ -459,22 +513,44 @@ impl PhiEngine {
         // defaults
         let context_window = engine_options.context_window.unwrap_or(3800);
 
-        let mut file = File::open(&model_path).map_err(|e| PhiError::InitalizationError {
-            error_text: e.to_string(),
-        })?;
-        let model_content =
-            gguf_file::Content::read(&mut file).map_err(|e| PhiError::InitalizationError {
+        let model = if is_gguf {
+            // Load quantized model using gguf
+            let mut file = File::open(&files[0]).map_err(|e| PhiError::InitalizationError {
                 error_text: e.to_string(),
             })?;
-        let model = Phi3::from_gguf(
-            engine_options.use_flash_attention,
-            model_content,
-            &mut file,
-            &device,
-        )
-        .map_err(|e| PhiError::InitalizationError {
-            error_text: e.to_string(),
-        })?;
+            let model_content = gguf_file::Content::read(&mut file).map_err(|e| PhiError::InitalizationError {
+                error_text: e.to_string(),
+            })?;
+            let quantized_model = candle_transformers::models::quantized_phi3::ModelWeights::from_gguf(
+                engine_options.use_flash_attention,
+                model_content,
+                &mut file,
+                &device,
+            ).map_err(|e| PhiError::InitalizationError {
+                error_text: e.to_string(),
+            })?;
+            Model::Quantized(quantized_model)
+        } else {
+            if let Some(config) = config {
+                let dtype = match engine_options.dtype.as_deref() {
+                    Some("f32") => DType::F32,
+                    Some("bf16") => device.bf16_default_to_f32(),
+                    _ => DType::F32,
+                };
+                let vb = unsafe { VarBuilder::from_mmaped_safetensors(&files, dtype, &device).map_err(|e| PhiError::InitalizationError {
+                    error_text: format!("Error loading model: {:?}", e),
+                })? };
+                let standard_model = candle_transformers::models::phi3::Model::new(&config, vb).map_err(|e| PhiError::InitalizationError {
+                    error_text: e.to_string(),
+                })?;
+                Model::Standard(standard_model)
+            } else {
+                return Err(PhiError::InitalizationError {
+                    error_text: "Model config not found".to_string(),
+                });
+            }
+        };
+
         let tokenizer =
             Tokenizer::from_file(tokenizer_path).map_err(|e| PhiError::InitalizationError {
                 error_text: e.to_string(),
@@ -565,4 +641,44 @@ impl PhiEngine {
             token_count -= self.count_tokens(&front.text);
         }
     }
+}
+
+// see https://github.com/huggingface/candle/blob/main/candle-examples/src/lib.rs#L125C5-L149C2
+fn hub_load_safetensors(
+    repo: &hf_hub::api::sync::ApiRepo,
+    json_file: &str,
+) -> Result<Vec<std::path::PathBuf>, PhiError> {
+    let json_file = repo.get(json_file).map_err(|e| PhiError::InitalizationError {
+        error_text: e.to_string(),
+    })?;
+    let json_file = std::fs::File::open(json_file).map_err(|e| PhiError::InitalizationError {
+        error_text: e.to_string(),
+    })?;
+    let json: serde_json::Value =
+        serde_json::from_reader(&json_file).map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
+    let weight_map = match json.get("weight_map") {
+        None => Err(PhiError::InitalizationError {
+            error_text: "weight map not found in json file".to_string(),
+        }),
+        Some(serde_json::Value::Object(map)) => Ok(map),
+        Some(_) => Err(PhiError::InitalizationError {
+            error_text: "weight map is not an object".to_string(),
+        }),
+    }?;
+    let mut safetensors_files = std::collections::HashSet::new();
+    for value in weight_map.values() {
+        if let Some(file) = value.as_str() {
+            safetensors_files.insert(file.to_string());
+        }
+    }
+    let safetensors_files = safetensors_files
+        .iter()
+        .map(|v| repo.get(v).map_err(|e| PhiError::InitalizationError {
+            error_text: e.to_string(),
+        }))
+        .collect::<Result<Vec<_>, _>>()?;
+    
+    Ok(safetensors_files)
 }

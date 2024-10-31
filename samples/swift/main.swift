@@ -1,5 +1,10 @@
 import Foundation
 
+enableTracing()
+
+let modelProvider = PhiModelProvider.huggingFace(modelRepo: "microsoft/Phi-3-mini-4k-instruct", modelRevision: "main")
+// let modelProvider = PhiModelProvider.huggingFaceGguf(modelRepo: "microsoft/Phi-3-mini-4k-instruct-gguf", modelFileName: "Phi-3-mini-4k-instruct-q4.gguf", modelRevision: "main")
+
 let inferenceOptionsBuilder = InferenceOptionsBuilder()
 try! inferenceOptionsBuilder.withTemperature(temperature: 0.9)
 try! inferenceOptionsBuilder.withSeed(seed: 146628346)
@@ -27,6 +32,8 @@ class ModelEventsHandler: PhiEventHandler {
 let modelBuilder = PhiEngineBuilder()
 try! modelBuilder.withEventHandler(eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler()))
 let gpuEnabled = try! modelBuilder.tryUseGpu()
+try! modelBuilder.withModelProvider(modelProvider: modelProvider)
+
 let model = try! modelBuilder.buildStateful(cacheDir: cacheDir, systemInstruction: "You are a hockey poet. Be brief and polite.")
 
 // Run inference
