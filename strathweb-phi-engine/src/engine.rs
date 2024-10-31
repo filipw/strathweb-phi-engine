@@ -2,8 +2,8 @@ use anyhow::{Error as E, Result};
 use candle_core::quantized::gguf_file;
 use candle_core::{DType, Device};
 use candle_nn::VarBuilder;
-use candle_transformers::models::quantized_phi3::ModelWeights as QuantizedPhi3;
 use candle_transformers::models::phi3::{Config as Phi3Config, Model as Phi3};
+use candle_transformers::models::quantized_phi3::ModelWeights as QuantizedPhi3;
 use hf_hub::api::sync::ApiBuilder;
 use hf_hub::Repo;
 use std::fs::File;
@@ -275,7 +275,7 @@ struct PhiEngineBuilderInner {
     model_provider: PhiModelProvider,
     use_flash_attention: bool,
     event_handler: Option<Arc<BoxedPhiEventHandler>>,
-    use_gpu: bool
+    use_gpu: bool,
 }
 
 impl PhiEngineBuilderInner {
@@ -351,12 +351,14 @@ impl StatefulPhiEngine {
                 .map_err(|e| PhiError::LockingError {
                     error_text: e.to_string(),
                 })?;
-        let result = self.engine
-            .run_inference(prompt_text, &conversation_context, inference_options).map_err(|e| PhiError::InferenceError {
+        let result = self
+            .engine
+            .run_inference(prompt_text, &conversation_context, inference_options)
+            .map_err(|e| PhiError::InferenceError {
                 error_text: e.to_string(),
             })?;
 
-            conversation_context.messages.push(ConversationMessage {
+        conversation_context.messages.push(ConversationMessage {
             role: Role::Assistant,
             text: result.result_text.clone(),
         });
@@ -371,7 +373,7 @@ impl StatefulPhiEngine {
                 .map_err(|e| PhiError::LockingError {
                     error_text: e.to_string(),
                 })?;
-                conversation_context.messages.clear();
+        conversation_context.messages.clear();
         Ok(())
     }
 
@@ -433,22 +435,24 @@ impl PhiEngine {
                     model_revision,
                 );
                 let api = api.repo(repo);
-                let files = hub_load_safetensors(
-                    &api,
-                    "model.safetensors.index.json",
-                )?;
+                let files = hub_load_safetensors(&api, "model.safetensors.index.json")?;
 
                 debug!("Loaded model files: {:?}", files);
 
-                let config_filename = api.get("config.json").map_err(|e| PhiError::InitalizationError {
-                    error_text: e.to_string(),
+                let config_filename =
+                    api.get("config.json")
+                        .map_err(|e| PhiError::InitalizationError {
+                            error_text: e.to_string(),
+                        })?;
+                let config = std::fs::read_to_string(config_filename).map_err(|e| {
+                    PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    }
                 })?;
-                let config = std::fs::read_to_string(config_filename).map_err(|e| PhiError::InitalizationError {
-                    error_text: e.to_string(),
-                })?;
-                let config: Phi3Config = serde_json::from_str(&config).map_err(|e| PhiError::InitalizationError {
-                    error_text: e.to_string(),
-                })?;
+                let config: Phi3Config =
+                    serde_json::from_str(&config).map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
                 debug!("Loaded model config: {:?}", config);
                 (files, false, Some(config))
             }
@@ -518,17 +522,20 @@ impl PhiEngine {
             let mut file = File::open(&files[0]).map_err(|e| PhiError::InitalizationError {
                 error_text: e.to_string(),
             })?;
-            let model_content = gguf_file::Content::read(&mut file).map_err(|e| PhiError::InitalizationError {
-                error_text: e.to_string(),
-            })?;
-            let quantized_model = candle_transformers::models::quantized_phi3::ModelWeights::from_gguf(
-                engine_options.use_flash_attention,
-                model_content,
-                &mut file,
-                &device,
-            ).map_err(|e| PhiError::InitalizationError {
-                error_text: e.to_string(),
-            })?;
+            let model_content =
+                gguf_file::Content::read(&mut file).map_err(|e| PhiError::InitalizationError {
+                    error_text: e.to_string(),
+                })?;
+            let quantized_model =
+                candle_transformers::models::quantized_phi3::ModelWeights::from_gguf(
+                    engine_options.use_flash_attention,
+                    model_content,
+                    &mut file,
+                    &device,
+                )
+                .map_err(|e| PhiError::InitalizationError {
+                    error_text: e.to_string(),
+                })?;
             Model::Quantized(quantized_model)
         } else {
             if let Some(config) = config {
@@ -537,12 +544,17 @@ impl PhiEngine {
                     Some("bf16") => device.bf16_default_to_f32(),
                     _ => DType::F32,
                 };
-                let vb = unsafe { VarBuilder::from_mmaped_safetensors(&files, dtype, &device).map_err(|e| PhiError::InitalizationError {
-                    error_text: format!("Error loading model: {:?}", e),
-                })? };
-                let standard_model = candle_transformers::models::phi3::Model::new(&config, vb).map_err(|e| PhiError::InitalizationError {
-                    error_text: e.to_string(),
-                })?;
+                let vb = unsafe {
+                    VarBuilder::from_mmaped_safetensors(&files, dtype, &device).map_err(|e| {
+                        PhiError::InitalizationError {
+                            error_text: format!("Error loading model: {:?}", e),
+                        }
+                    })?
+                };
+                let standard_model = candle_transformers::models::phi3::Model::new(&config, vb)
+                    .map_err(|e| PhiError::InitalizationError {
+                        error_text: e.to_string(),
+                    })?;
                 Model::Standard(standard_model)
             } else {
                 return Err(PhiError::InitalizationError {
@@ -648,16 +660,18 @@ fn hub_load_safetensors(
     repo: &hf_hub::api::sync::ApiRepo,
     json_file: &str,
 ) -> Result<Vec<std::path::PathBuf>, PhiError> {
-    let json_file = repo.get(json_file).map_err(|e| PhiError::InitalizationError {
-        error_text: e.to_string(),
-    })?;
+    let json_file = repo
+        .get(json_file)
+        .map_err(|e| PhiError::InitalizationError {
+            error_text: e.to_string(),
+        })?;
     let json_file = std::fs::File::open(json_file).map_err(|e| PhiError::InitalizationError {
         error_text: e.to_string(),
     })?;
     let json: serde_json::Value =
         serde_json::from_reader(&json_file).map_err(|e| PhiError::InitalizationError {
-                        error_text: e.to_string(),
-                    })?;
+            error_text: e.to_string(),
+        })?;
     let weight_map = match json.get("weight_map") {
         None => Err(PhiError::InitalizationError {
             error_text: "weight map not found in json file".to_string(),
@@ -675,10 +689,12 @@ fn hub_load_safetensors(
     }
     let safetensors_files = safetensors_files
         .iter()
-        .map(|v| repo.get(v).map_err(|e| PhiError::InitalizationError {
-            error_text: e.to_string(),
-        }))
+        .map(|v| {
+            repo.get(v).map_err(|e| PhiError::InitalizationError {
+                error_text: e.to_string(),
+            })
+        })
         .collect::<Result<Vec<_>, _>>()?;
-    
+
     Ok(safetensors_files)
 }
