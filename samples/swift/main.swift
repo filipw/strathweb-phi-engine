@@ -1,9 +1,16 @@
 import Foundation
 
-enableTracing()
+let isQuantizedMode = CommandLine.arguments.contains("--quantized")
 
-let modelProvider = PhiModelProvider.huggingFace(modelRepo: "microsoft/Phi-3-mini-4k-instruct", modelRevision: "main")
-// let modelProvider = PhiModelProvider.huggingFaceGguf(modelRepo: "microsoft/Phi-3-mini-4k-instruct-gguf", modelFileName: "Phi-3-mini-4k-instruct-q4.gguf", modelRevision: "main")
+if isQuantizedMode {
+    print(" 🍃 Quantized mode is enabled.")
+} else {
+    print(" 💪 Safe tensors mode is enabled.")
+}
+
+let modelProvider = isQuantizedMode ? 
+    PhiModelProvider.huggingFaceGguf(modelRepo: "microsoft/Phi-3-mini-4k-instruct-gguf", modelFileName: "Phi-3-mini-4k-instruct-q4.gguf", modelRevision: "main") : 
+    PhiModelProvider.huggingFace(modelRepo: "microsoft/Phi-3-mini-4k-instruct", modelRevision: "main")
 
 let inferenceOptionsBuilder = InferenceOptionsBuilder()
 try! inferenceOptionsBuilder.withTemperature(temperature: 0.9)
