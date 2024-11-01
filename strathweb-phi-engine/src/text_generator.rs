@@ -131,6 +131,7 @@ impl TextGenerator {
             sample_len as usize
         };
 
+        let prompt_len = tokens.len();
         let mut tokens = tokens.to_vec();
         let mut pos = 0;
         for index in 0..to_sample {
@@ -138,7 +139,7 @@ impl TextGenerator {
             let logits = match &mut self.model {
                 Model::Quantized(m) => {
                     let input = Tensor::new(&[next_token], &self.device)?.unsqueeze(0)?;
-                    m.forward(&input, tokens.len() + index)?.squeeze(0)?
+                    m.forward(&input, prompt_len + index)?.squeeze(0)?
                 }
                 Model::Standard(m) => {
                     let ctxt = &tokens[tokens.len().saturating_sub(context_size)..];
