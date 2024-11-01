@@ -18,4 +18,4 @@ swiftc *.swift \
     -O \
     -o phi-engine-swift-sample
 
-./phi-engine-swift-sample
+./phi-engine-swift-sample "$@"
