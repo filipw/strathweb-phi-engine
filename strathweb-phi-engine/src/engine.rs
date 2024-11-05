@@ -409,8 +409,6 @@ impl PhiEngine {
     ) -> Result<Self, PhiError> {
         let start = std::time::Instant::now();
         // this also requires building with features = ["metal"]
-        //let device = Device::new_metal(0).unwrap();
-        //let device = Device::Cpu;
         let device = if engine_options.use_gpu {
             Device::new_metal(0).map_err(|_| PhiError::GpuNotSupported)?
         } else {
