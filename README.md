@@ -1,6 +1,6 @@
 # Strathweb Phi Engine
 
-A cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally using [candle](https://github.com/huggingface/candle) in GGUF format. Safetensors support is on the way.
+A cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally using [candle](https://github.com/huggingface/candle) in GGUF (quantized) and safe tensors (full models) format.
 
 ## Supported platforms
 
@@ -101,11 +101,11 @@ Now open the Notebook and run the cells.
 
 ✅ Tested on Linux x64
 
-✅ Tested on macOS arm64. Supports Metal.
+✅ Tested on macOS arm64.
 
 ### Swift
 
-✅ Tested on macOS arm64. Supports Metal.
+✅ Tested on macOS arm64.
 
 ✅ Tested on iPad Air M1 8GB RAM
 
@@ -117,13 +117,17 @@ However, for 4GB RAM iPhones, it's possible to use the (very) low fidelity Q2_K 
 
 ### Kotlin
 
-✅ Tested on macOS arm64. Supports Metal.
+✅ Tested on macOS arm64.
 
 ### Python
 
 ✅ Tested on Windows arm64
 
-✅ Tested on macOS arm64. Supports Metal.
+✅ Tested on macOS arm64.
+
+## GPU Support
+
+Currently the library supports Metal on MacOS. On other platforms only CPU is supported.
 
 ## AutoGen
 

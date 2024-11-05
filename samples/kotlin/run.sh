@@ -12,4 +12,4 @@ kotlinc main.kt deps/strathweb_phi_engine.kt -include-runtime -cp lib/jna.jar -d
 javac -cp out/main.jar:lib/jna.jar Main.java -d out
 jar uf out/main.jar -C out Main.class
 
-java -Djna.library.path=$(pwd)/deps -cp out/main.jar:lib/jna.jar MainKt
+java -Djna.library.path=$(pwd)/deps -cp out/main.jar:lib/jna.jar MainKt "$@"

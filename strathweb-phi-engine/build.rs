@@ -9,13 +9,17 @@ fn main() {
     generate_bindings(
         udl_file.into(),
         None,
-        vec![TargetLanguage::Swift, TargetLanguage::Kotlin, TargetLanguage::Python],
+        vec![
+            TargetLanguage::Swift,
+            TargetLanguage::Kotlin,
+            TargetLanguage::Python,
+        ],
         Some(out_dir.into()),
         None,
         None,
         false,
     )
-    .unwrap();
+    .unwrap(); 
 
     let status = Command::new("uniffi-bindgen-cs")
         .arg("--out-dir")

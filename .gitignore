@@ -416,3 +416,5 @@ samples/python/jupyter/strathweb_phi_engine.dll
 packages/swift/Strathweb.Phi.Engine/.build
 packages/swift/Strathweb.Phi.Engine/Libs
 strathweb_phi_engine.swift
+packages/swift/Strathweb.Phi.Engine/.swiftpm/
+samples/ios/phi.engine.sample/phi.engine.sample.xcodeproj/xcuserdata/filipw.xcuserdatad/xcschemes/xcschememanagement.plist
