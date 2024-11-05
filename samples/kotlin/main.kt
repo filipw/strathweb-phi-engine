@@ -14,14 +14,14 @@ fun main(args: Array<String>) {
     }
 
     val modelProvider = if (isNonQuantizedMode) {
-        PhiModelProvider.HuggingFaceGguf(
-            modelRepo = "microsoft/Phi-3-mini-4k-instruct-gguf",
-            modelFileName = "Phi-3-mini-4k-instruct-q4.gguf",
+        PhiModelProvider.HuggingFace(
+            modelRepo = "microsoft/Phi-3-mini-4k-instruct",
             modelRevision = "main"
         )
     } else {
-        PhiModelProvider.HuggingFace(
-            modelRepo = "microsoft/Phi-3-mini-4k-instruct",
+        PhiModelProvider.HuggingFaceGguf(
+            modelRepo = "microsoft/Phi-3-mini-4k-instruct-gguf",
+            modelFileName = "Phi-3-mini-4k-instruct-q4.gguf",
             modelRevision = "main"
         )
     }
