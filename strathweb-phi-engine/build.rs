@@ -19,7 +19,7 @@ fn main() {
         None,
         false,
     )
-    .unwrap();
+    .unwrap(); 
 
     let status = Command::new("uniffi-bindgen-cs")
         .arg("--out-dir")
