@@ -105,7 +105,8 @@ interface PhiEngineBuilder {
 interface PhiModelProvider {
   HuggingFace(string model_repo, string model_revision);
   HuggingFaceGguf(string model_repo, string model_file_name, string model_revision);
-  FileSystem(string model_path);
+  FileSystem(string index_path, string config_path);
+  FileSystemGguf(string model_path);
 };
 
 [Enum]
