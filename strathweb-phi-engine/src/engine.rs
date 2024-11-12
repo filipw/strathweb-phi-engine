@@ -310,11 +310,12 @@ pub enum PhiModelProvider {
         model_revision: String,
     },
     FileSystem {
+        index_path: String,
+        config_path: String,
+    },
+    FileSystemGguf {
         model_path: String,
     },
-    // FileSystemGguf {
-    //     model_path: String,
-    // },
 }
 
 #[derive(Debug, Clone)]
@@ -433,24 +434,12 @@ impl PhiEngine {
                     model_revision,
                 );
                 let api = api.repo(repo);
-                let files = hub_load_safetensors(&api, "model.safetensors.index.json")?;
+                let api_provider = ApiFileProvider { repo: api };
+                let files = load_safetensors(&api_provider, "model.safetensors.index.json")?;
 
                 debug!("Loaded model files: {:?}", files);
 
-                let config_filename =
-                    api.get("config.json")
-                        .map_err(|e| PhiError::InitalizationError {
-                            error_text: e.to_string(),
-                        })?;
-                let config = std::fs::read_to_string(config_filename).map_err(|e| {
-                    PhiError::InitalizationError {
-                        error_text: e.to_string(),
-                    }
-                })?;
-                let config: Phi3Config =
-                    serde_json::from_str(&config).map_err(|e| PhiError::InitalizationError {
-                        error_text: e.to_string(),
-                    })?;
+                let config = load_config(&api_provider, "config.json")?;
                 debug!("Loaded model config: {:?}", config);
                 (files, false, Some(config))
             }
@@ -480,7 +469,41 @@ impl PhiEngine {
                 debug!(" --> Downloaded model to {:?}...", model_path);
                 (vec![model_path], true, None)
             }
-            PhiModelProvider::FileSystem { model_path } => (vec![model_path.into()], true, None),
+            PhiModelProvider::FileSystemGguf { model_path } => (vec![model_path.into()], true, None),
+            PhiModelProvider::FileSystem { index_path, config_path } => {
+                let index_path = std::path::PathBuf::from(&index_path);
+                if !index_path.is_absolute() {
+                    return Err(PhiError::InitalizationError {
+                        error_text: format!("The index path must be absolute. Provided path: {:?}", index_path),
+                    });
+                }
+
+                let base_dir = match index_path.parent() {
+                    Some(parent) => parent.to_path_buf(),
+                    None => {
+                        return Err(PhiError::InitalizationError {
+                            error_text: format!("The index path {:?} does not have a valid parent directory", index_path),
+                        });
+                    }
+                };
+
+                let index_path_str = match index_path.to_str() {
+                    Some(path_str) => path_str,
+                    None => {
+                        return Err(PhiError::InitalizationError {
+                            error_text: format!("The index path {:?} could not be converted to a valid string", index_path),
+                        });
+                    }
+                };
+
+                let fs_provider = FilesystemFileProvider::new(base_dir);
+                let files = load_safetensors(&fs_provider, &index_path_str)?;
+                debug!("Loaded model files: {:?}", files);
+
+                let config = load_config(&fs_provider, &config_path)?;
+                debug!("Loaded model config: {:?}", config);
+                (files, false, Some(config))
+            },
         };
 
         let tokenizer_path = match engine_options.tokenizer_provider {
@@ -654,15 +677,11 @@ impl PhiEngine {
 }
 
 // see https://github.com/huggingface/candle/blob/main/candle-examples/src/lib.rs#L125C5-L149C2
-fn hub_load_safetensors(
-    repo: &hf_hub::api::sync::ApiRepo,
+fn load_safetensors(
+    provider: &dyn FileProvider,
     json_file: &str,
 ) -> Result<Vec<std::path::PathBuf>, PhiError> {
-    let json_file = repo
-        .get(json_file)
-        .map_err(|e| PhiError::InitalizationError {
-            error_text: e.to_string(),
-        })?;
+    let json_file = provider.get(json_file)?;
     let json_file = std::fs::File::open(json_file).map_err(|e| PhiError::InitalizationError {
         error_text: e.to_string(),
     })?;
@@ -687,12 +706,67 @@ fn hub_load_safetensors(
     }
     let safetensors_files = safetensors_files
         .iter()
-        .map(|v| {
-            repo.get(v).map_err(|e| PhiError::InitalizationError {
-                error_text: e.to_string(),
-            })
-        })
+        .map(|v| provider.get(v))
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(safetensors_files)
+}
+
+fn load_config(provider: &dyn FileProvider, config_file: &str) -> Result<Phi3Config, PhiError> {
+    let config_filename = provider.get(config_file)?;
+    let config_content = std::fs::read_to_string(config_filename).map_err(|e| {
+        PhiError::InitalizationError {
+            error_text: e.to_string(),
+        }
+    })?;
+    let config: Phi3Config = serde_json::from_str(&config_content).map_err(|e| {
+        PhiError::InitalizationError {
+            error_text: e.to_string(),
+        }
+    })?;
+    Ok(config)
+}
+
+trait FileProvider {
+    fn get(&self, file_path: &str) -> Result<std::path::PathBuf, PhiError>;
+}
+
+struct ApiFileProvider {
+    repo: hf_hub::api::sync::ApiRepo,
+}
+
+impl FileProvider for ApiFileProvider {
+    fn get(&self, file_path: &str) -> Result<std::path::PathBuf, PhiError> {
+        self.repo.get(file_path).map_err(|e| PhiError::InitalizationError {
+            error_text: e.to_string(),
+        })
+    }
+}
+
+struct FilesystemFileProvider {
+    base_dir: std::path::PathBuf,
+}
+
+impl FilesystemFileProvider {
+    fn new(base_dir: std::path::PathBuf) -> Self {
+        FilesystemFileProvider { base_dir }
+    }
+}
+impl FileProvider for FilesystemFileProvider {
+    fn get(&self, file_path: &str) -> Result<std::path::PathBuf, PhiError> {
+        let path = std::path::PathBuf::from(file_path);
+        let full_path = if path.is_absolute() {
+            path
+        } else {
+            self.base_dir.join(path)
+        };
+        
+        if full_path.exists() {
+            Ok(full_path)
+        } else {
+            Err(PhiError::InitalizationError {
+                error_text: format!("File not found: {}", full_path.display()),
+            })
+        }
+    }
 }
