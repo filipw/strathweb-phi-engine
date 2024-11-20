@@ -135,6 +135,8 @@ The repository also contains a C# integration library for [AutoGen](https://gith
 
 The NuGet package is built when running `./build-dotnet.sh` (`build-dotnet.bat` on Windows).
 
-## Blog post
+## Blog posts
 
-For an announcement post, go [here](https://strathweb.com/2024/07/announcing-strathweb-phi-engine-a-cross-platform-library-for-running-phi-3-anywhere/).
+📝 an initial [announcement post](https://strathweb.com/2024/07/announcing-strathweb-phi-engine-a-cross-platform-library-for-running-phi-3-anywhere/)
+📝 safe tensors [announcement post](https://www.strathweb.com/2024/11/strathweb-phi-engine-now-with-safe-tensors-support/)
+
