@@ -10,6 +10,8 @@ A cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft
 | **Manual Integration** | Bindings + XCFramework Bindings + native library | Bindings + native library                                                                   | Bindings + native library         | Bindings + native library                                   |
 | **Platforms**          | macOS arm64<br/>iOS                                  | Windows x64<br/>Windows arm64 (not via Nuget)<br/>Linux x64<br/>Linux arm64 (not via Nuget)<br/>macOS arm64 | Windows x64<br/>Linux x64<br/>macOS arm64 | Windows x64<br/>Windows arm64<br/>Linux x64<br/>Linux arm64<br/>macOS arm64 |
 
+![](content/strathweb-phi-engine.excalidraw.png)
+
 ## Building instructions
 
 ### Swift
