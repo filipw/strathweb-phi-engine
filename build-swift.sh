@@ -1,5 +1,6 @@
 #!/bin/bash
 
+IPHONEOS_DEPLOYMENT_TARGET=18.0
 NAME="strathweb_phi_engine"
 HEADERPATH="strathweb-phi-engine/bindings/strathweb_phi_engineFFI.h"
 TARGETDIR="strathweb-phi-engine/target"
