@@ -28,7 +28,7 @@ jobs:
         cargo build --release 
         
     - name: Upload default artifacts
-      if: github.event_name != 'pull_request'
+      #if: github.event_name != 'pull_request'
       uses: actions/upload-artifact@v3
       with:
          name: native-library-${{ matrix.os }}
@@ -38,7 +38,7 @@ jobs:
            strathweb-phi-engine/target/release/*.dll
     
     - name: Upload bindings
-      if: matrix.os == 'ubuntu-latest' && github.event_name != 'pull_request'
+      if: matrix.os == 'ubuntu-latest' 
       uses: actions/upload-artifact@v3
       with:
          name: language-bindings
@@ -59,10 +59,10 @@ jobs:
     - name: Build Swift Package
       run: ./build-swift.sh
     - name: Clean temporary build files from Swift Package
-      if: github.event_name != 'pull_request'
+      #if: github.event_name != 'pull_request'
       run: rm -rf packages/swift/Strathweb.Phi.Engine/.build
     - name: Upload artifact
-      if: github.event_name != 'pull_request'
+      #if: github.event_name != 'pull_request'
       uses: actions/upload-artifact@v3
       with:
         name: Strathweb.Phi.Engine-SwiftPackage
@@ -86,7 +86,7 @@ jobs:
     - name: Download macOS artifacts
       uses: actions/download-artifact@v3
       with:
-        name: native-library-macos-14
+        name: native-library-macos-15
         path: artifacts/macos
     - name: Download Windows artifacts
       uses: actions/download-artifact@v3
