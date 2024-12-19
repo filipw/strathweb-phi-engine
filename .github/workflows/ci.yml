@@ -47,7 +47,7 @@ jobs:
 
 
   build-swift:
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
     - uses: actions/checkout@v3
@@ -112,10 +112,15 @@ jobs:
     - name: Upload NuGet package (Strathweb.Phi.Engine)
       uses: actions/upload-artifact@v3
       with:
-        name: strathweb_phi_engine_nuget_package
+        name: Strathweb.Phi.Engine
         path: packages/csharp/Strathweb.Phi.Engine/bin/Release/*.nupkg
     - name: Upload NuGet package (Strathweb.Phi.Engine.AutoGen)
       uses: actions/upload-artifact@v3
       with:
-        name: strathweb_phi_engine_nuget_package
+        name: Strathweb.Phi.Engine.AutoGen
         path: packages/csharp/Strathweb.Phi.Engine.AutoGen/bin/Release/*.nupkg
+    - name: Upload NuGet package (Strathweb.Phi.Engine.Microsoft.Extensions.AI)
+      uses: actions/upload-artifact@v3
+      with:
+        name: Strathweb.Phi.Engine.Microsoft.Extensions.AI
+        path: packages/csharp/Strathweb.Phi.Engine.Microsoft.Extensions.AI/bin/Release/*.nupkg

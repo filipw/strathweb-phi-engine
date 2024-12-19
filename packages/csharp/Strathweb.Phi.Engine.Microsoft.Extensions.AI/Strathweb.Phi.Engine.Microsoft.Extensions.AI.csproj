@@ -2,17 +2,19 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <Version>0.1.2</Version>
     <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>NU5104</NoWarn>
+    <Version>0.1.2</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AutoGen" Version="0.1.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="9.0.1-preview.1.24570.5" />
     <PackageReference Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Strathweb.Phi.Engine\Strathweb.Phi.Engine.csproj" />
   </ItemGroup>
+  
 </Project>

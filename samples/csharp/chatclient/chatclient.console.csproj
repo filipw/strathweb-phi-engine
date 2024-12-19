@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+      <!-- note: this is intentionally referencing the library via the nuget package: to test it, and to take advantage of the native assets there -->
+      <PackageReference Include="Strathweb.Phi.Engine.Microsoft.Extensions.AI" Version="0.1.3" />
+  </ItemGroup>
+
+  <!-- only use the below if you know what you are doing (e.g. the native assets have to provided by hand or by extra copy task) -->
+  <!-- <ItemGroup>
+    <ProjectReference Include="..\..\..\packages\csharp\Strathweb.Phi.Engine.Microsoft.Extensions.AI\Strathweb.Phi.Engine.Microsoft.Extensions.AI.csproj" />
+  </ItemGroup> -->
+</Project>
