@@ -93,10 +93,13 @@ public class PhiEngineChatClient : IChatClient
             var head = messages.Take(messages.Count - 1).ToList();
             var phiEngineMessages = head.Where(m => m.Role != ChatRole.System && m.Role != ChatRole.Tool)
                 .Select(m => m.ToConversationMessage()).ToList();
-            var systemInstruction = head.FirstOrDefault(m => m.Role == ChatRole.System)?.Text ?? _systemInstruction;
+            var systemInstruction = head.LastOrDefault(m => m.Role == ChatRole.System)?.Text ?? _systemInstruction;
+            
+            Console.WriteLine($"Using system instruction: {systemInstruction}");
             return new ConversationContext(phiEngineMessages, systemInstruction);
         }
 
+        Console.WriteLine($"Using default system instruction: {_systemInstruction}");
         return new ConversationContext([], _systemInstruction);
     }
 

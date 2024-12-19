@@ -19,10 +19,9 @@ Console.WriteLine(response);
 
 Console.WriteLine();
 await foreach (var update in chatClient.CompleteStreamingAsync([
-             new ChatMessage(ChatRole.System, "you are an ice hockey poet"),
-             new ChatMessage(ChatRole.User, "write a haiku")
-         ]))
+                   new ChatMessage(ChatRole.System, "you are an ice hockey poet"),
+                   new ChatMessage(ChatRole.User, "write a haiku")
+               ]))
 {
     Console.Write(update);
 }
-
