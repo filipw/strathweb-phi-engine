@@ -1,6 +1,5 @@
 #!/bin/bash
 
-IPHONEOS_DEPLOYMENT_TARGET=18.0
 NAME="strathweb_phi_engine"
 HEADERPATH="strathweb-phi-engine/bindings/strathweb_phi_engineFFI.h"
 TARGETDIR="strathweb-phi-engine/target"
@@ -9,7 +8,7 @@ RELDIR="release"
 STATIC_LIB_NAME="lib${NAME}.a"
 NEW_HEADER_DIR="strathweb-phi-engine/bindings/include"
 
-cargo build --manifest-path strathweb-phi-engine/Cargo.toml --target aarch64-apple-ios --release
+IPHONEOS_DEPLOYMENT_TARGET=18.0 cargo build --manifest-path strathweb-phi-engine/Cargo.toml --target aarch64-apple-ios --release
 cargo build --manifest-path strathweb-phi-engine/Cargo.toml --target aarch64-apple-ios-sim --release
 MACOSX_DEPLOYMENT_TARGET=14.0 cargo build --manifest-path strathweb-phi-engine/Cargo.toml --target aarch64-apple-darwin --release
 
