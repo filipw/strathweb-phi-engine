@@ -634,9 +634,14 @@ impl PhiEngine {
             })
             .collect::<String>();
 
-        let system_instruction = conversation_context.system_instruction.clone().unwrap_or("You are a helpful assistant that answers user questions. Be short and direct in your answers.".to_string());
-
-        let prompt_with_history = format!("<|system|>\n{}<|end|>\n<|assistant|>Understood, I will adhere to these instructions<|end|>{}\n<|assistant|>\n", system_instruction, history_prompt);
+        let prompt_with_history = {
+            // if system instruction is there, use it, otherwise construct prompt without system instruction
+            if let Some(system_instruction) = conversation_context.system_instruction.clone() {
+                format!("<|system|>{}<|end|>{}\n<|assistant|>\n", system_instruction, history_prompt)
+            } else {
+                format!("{}\n<|assistant|>\n", history_prompt)
+            }
+        };
 
         let mut pipeline = TextGenerator::new(
             &self.model,
