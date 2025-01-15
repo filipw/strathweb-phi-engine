@@ -20,7 +20,7 @@ class Phi3ViewModel: ObservableObject {
     init() {
         let inferenceOptionsBuilder = InferenceOptionsBuilder()
         try! inferenceOptionsBuilder.withTemperature(temperature: 0.9)
-        try! inferenceOptionsBuilder.withSeed(seed: 146628346)
+        try! inferenceOptionsBuilder.withSeed(seed: 146628345)
         self.inferenceOptions = try! inferenceOptionsBuilder.build()
     }
     
@@ -34,7 +34,7 @@ class Phi3ViewModel: ObservableObject {
         try! engineBuilder.withModelProvider(modelProvider: modelProvider)
         try! engineBuilder.withEventHandler(eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler(parent: self)))
         
-        self.engine = try! engineBuilder.buildStateful(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: "You are a sports store agent. you speak only about sports equipment. Be brief, direct and polite.")
+        self.engine = try! engineBuilder.buildStateful(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: "You are a hockey wise old man. Share your wisdom briefly like an oracle. Be brief and to the point.")
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true
