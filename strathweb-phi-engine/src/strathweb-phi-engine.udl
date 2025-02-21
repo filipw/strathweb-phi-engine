@@ -10,6 +10,7 @@ dictionary InferenceOptions {
     f32 repeat_penalty;
 	u16 repeat_last_n;
 	u64 seed;
+    ChatFormat chat_format;
 };
 
 interface InferenceOptionsBuilder {
@@ -35,6 +36,9 @@ interface InferenceOptionsBuilder {
 
     [Throws=PhiError]
     void with_seed(u64 seed);
+
+    [Throws=PhiError]
+    void with_chat_format(ChatFormat chat_format);
 
     [Throws=PhiError]
     InferenceOptions build();
@@ -118,6 +122,11 @@ interface TokenizerProvider {
 enum Role {
     "Assistant",
     "User",
+};
+
+enum ChatFormat {
+    "Llama2",
+    "ChatML",
 };
 
 callback interface PhiEventHandler {
