@@ -1,6 +1,6 @@
 # Strathweb Phi Engine
 
-A cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally using [candle](https://github.com/huggingface/candle) in GGUF (quantized) and safe tensors (full models) format.
+A cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally using [candle](https://github.com/huggingface/candle) in GGUF and safe tensors format.
 
 ## Supported platforms
 
@@ -142,4 +142,3 @@ The NuGet package is built when running `./build-dotnet.sh` (`build-dotnet.bat` 
 📝 an initial [announcement post](https://strathweb.com/2024/07/announcing-strathweb-phi-engine-a-cross-platform-library-for-running-phi-3-anywhere/)
 
 📝 safe tensors [announcement post](https://www.strathweb.com/2024/11/strathweb-phi-engine-now-with-safe-tensors-support/)
-
