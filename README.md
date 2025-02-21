@@ -142,3 +142,8 @@ The NuGet package is built when running `./build-dotnet.sh` (`build-dotnet.bat` 
 📝 an initial [announcement post](https://strathweb.com/2024/07/announcing-strathweb-phi-engine-a-cross-platform-library-for-running-phi-3-anywhere/)
 
 📝 safe tensors [announcement post](https://www.strathweb.com/2024/11/strathweb-phi-engine-now-with-safe-tensors-support/)
+
+📝 [AutoGen library](https://www.strathweb.com/2024/09/using-local-phi-3-models-in-autogen-with-strathweb-phi-engine/)
+
+📝 [.NET examples and Microso.Extensions.AI support](https://www.strathweb.com/2024/12/running-phi-inference-in-net-applications-with-strathweb-phi-engine/)
+
