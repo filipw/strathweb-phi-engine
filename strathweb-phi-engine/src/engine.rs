@@ -27,6 +27,12 @@ pub enum Role {
     Assistant,
 }
 
+#[derive(Clone, Debug)]
+pub enum ChatFormat {
+    ChatML,     // Phi-4 style with <|im_start|>, <|im_sep|>, <|im_end|>
+    Llama2,  // Phi-3 style with <|system|>, <|end|>, etc.
+}
+
 #[derive(Debug, Clone)]
 pub struct InferenceOptions {
     pub token_count: u16,
@@ -36,6 +42,7 @@ pub struct InferenceOptions {
     pub repeat_penalty: f32,
     pub repeat_last_n: u16,
     pub seed: u64,
+    pub chat_format: ChatFormat,
 }
 
 pub struct InferenceOptionsBuilder {
@@ -53,6 +60,7 @@ impl InferenceOptionsBuilder {
                 repeat_penalty: 1.0,
                 repeat_last_n: 64,
                 seed: 146628346,
+                chat_format: ChatFormat::Llama2,
             }),
         }
     }
@@ -110,6 +118,14 @@ impl InferenceOptionsBuilder {
             error_text: e.to_string(),
         })?;
         inner.seed = seed;
+        Ok(())
+    }
+
+    pub fn with_chat_format(&self, chat_format: ChatFormat) -> Result<(), PhiError> {
+        let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
+            error_text: e.to_string(),
+        })?;
+        inner.chat_format = chat_format;
         Ok(())
     }
 
@@ -622,27 +638,51 @@ impl PhiEngine {
             role: Role::User,
             text: prompt_text.into(),
         });
-
-        let history_prompt = history
-            .iter()
-            .map(|entry| {
-                let role = match entry.role {
-                    Role::User => "user",
-                    Role::Assistant => "assistant",
-                };
-                format!("\n<|{}|>{}<|end|>", role, entry.text)
-            })
-            .collect::<String>();
-
-        let prompt_with_history = {
-            // if system instruction is there, use it, otherwise construct prompt without system instruction
-            if let Some(system_instruction) = conversation_context.system_instruction.clone() {
-                format!("<|system|>{}<|end|>{}\n<|assistant|>\n", system_instruction, history_prompt)
-            } else {
-                format!("{}\n<|assistant|>\n", history_prompt)
+    
+        let history_prompt = match inference_options.chat_format {
+            ChatFormat::Llama2 => history
+                .iter()
+                .map(|entry| {
+                    let role = match entry.role {
+                        Role::User => "user",
+                        Role::Assistant => "assistant",
+                    };
+                    format!("\n<|{}|>{}<|end|>", role, entry.text)
+                })
+                .collect::<String>(),
+            ChatFormat::ChatML => history
+                .iter()
+                .map(|entry| {
+                    let role = match entry.role {
+                        Role::User => "user",
+                        Role::Assistant => "assistant",
+                    };
+                    format!("\n<|im_start|>{}<|im_sep|>{}<|im_end|>", role, entry.text)
+                })
+                .collect::<String>(),
+        };
+    
+        let prompt_with_history = match inference_options.chat_format {
+            ChatFormat::Llama2 => {
+                if let Some(system_instruction) = conversation_context.system_instruction.clone() {
+                    format!("<|system|>{}<|end|>{}\n<|assistant|>\n", 
+                        system_instruction, history_prompt)
+                } else {
+                    format!("{}\n<|assistant|>\n", history_prompt)
+                }
+            }
+            ChatFormat::ChatML => {
+                if let Some(system_instruction) = conversation_context.system_instruction.clone() {
+                    format!(
+                        "<|im_start|>system<|im_sep|>{}<|im_end|>{}\n<|im_start|>assistant<|im_sep|>\n",
+                        system_instruction, history_prompt
+                    )
+                } else {
+                    format!("{}\n<|im_start|>assistant<|im_sep|>\n", history_prompt)
+                }
             }
         };
-
+    
         let mut pipeline = TextGenerator::new(
             &self.model,
             self.tokenizer.clone(),
@@ -650,13 +690,12 @@ impl PhiEngine {
             &self.device,
             self.event_handler.clone(),
         );
-
+    
         let response = pipeline
             .run(&prompt_with_history, inference_options.token_count)
             .map_err(|e: E| PhiError::InferenceError {
                 error_text: e.to_string(),
             })?;
-
         Ok(response)
     }
 

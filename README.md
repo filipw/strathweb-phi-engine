@@ -1,6 +1,6 @@
 # Strathweb Phi Engine
 
-A cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally using [candle](https://github.com/huggingface/candle) in GGUF (quantized) and safe tensors (full models) format.
+A cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally using [candle](https://github.com/huggingface/candle) in GGUF and safe tensors format.
 
 ## Supported platforms
 

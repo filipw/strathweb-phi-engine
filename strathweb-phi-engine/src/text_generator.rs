@@ -79,7 +79,6 @@ impl TextGenerator {
         debug!("Model is quantized: {}", quantized);
 
         let mut all_tokens = vec![];
-
         let mut next_token = if quantized {
             let mut next_token = 0;
             for (pos, token) in tokens.iter().enumerate() {
@@ -116,12 +115,8 @@ impl TextGenerator {
         let endoftext_token = binding
             .get("<|endoftext|>")
             .ok_or_else(|| anyhow::Error::msg("No <|endoftext|> found"))?;
-        let end_token = binding
-            .get("<|end|>")
-            .ok_or_else(|| anyhow::Error::msg("No <|end|> found"))?;
-        let assistant_token = binding
-            .get("<|assistant|>")
-            .ok_or_else(|| anyhow::Error::msg("No <|assistant|> found"))?;
+        let end_token = binding.get("<|end|>");
+        let assistant_token = binding.get("<|assistant|>");
 
         let start_post_prompt = std::time::Instant::now();
         let mut sampled = 0;
@@ -172,8 +167,8 @@ impl TextGenerator {
             all_tokens.push(next_token);
 
             if &next_token == endoftext_token
-                || &next_token == end_token
-                || &next_token == assistant_token
+            || end_token.map_or(false, |token| &next_token == token)
+            || assistant_token.map_or(false, |token| &next_token == token)
             {
                 info!("Breaking due to end token: {}", next_token);
                 break;

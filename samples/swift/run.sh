@@ -15,7 +15,9 @@ swiftc *.swift \
     -framework MetalPerformanceShaders \
     -framework SystemConfiguration \
     -lc++ \
-    -O \
+    -O -whole-module-optimization \
+    -cross-module-optimization \
+    -enforce-exclusivity=unchecked \
     -o phi-engine-swift-sample
 
 ./phi-engine-swift-sample "$@"

@@ -16,6 +16,7 @@ use crate::engine::PhiModelProvider;
 use crate::engine::Role;
 use crate::engine::StatefulPhiEngine;
 use crate::engine::TokenizerProvider;
+use crate::engine::ChatFormat;
 
 use once_cell::sync::Lazy;
 use thiserror::Error;
