@@ -163,15 +163,15 @@ pub trait PhiEventHandler: Send + Sync {
     fn on_inference_token(&self, token: String) -> Result<(), PhiError>;
 }
 
-pub struct BoxedPhiEventHandler {
-    pub handler: Box<dyn PhiEventHandler>,
-}
+// pub struct BoxedPhiEventHandler {
+//     pub handler: Box<dyn PhiEventHandler>,
+// }
 
-impl BoxedPhiEventHandler {
-    pub fn new(handler: Box<dyn PhiEventHandler>) -> Self {
-        Self { handler }
-    }
-}
+// impl BoxedPhiEventHandler {
+//     pub fn new(handler: Arc<dyn PhiEventHandler>) -> Self {
+//         Self { handler }
+//     }
+// }
 
 pub struct PhiEngineBuilder {
     inner: Mutex<PhiEngineBuilderInner>,
@@ -202,7 +202,7 @@ impl PhiEngineBuilder {
 
     pub fn with_event_handler(
         &self,
-        event_handler: Arc<BoxedPhiEventHandler>,
+        event_handler: Arc<dyn PhiEventHandler>,
     ) -> Result<(), PhiError> {
         let mut inner = self.inner.lock().map_err(|e| PhiError::LockingError {
             error_text: e.to_string(),
@@ -290,7 +290,7 @@ struct PhiEngineBuilderInner {
     tokenizer_provider: TokenizerProvider,
     model_provider: PhiModelProvider,
     use_flash_attention: bool,
-    event_handler: Option<Arc<BoxedPhiEventHandler>>,
+    event_handler: Option<Arc<dyn PhiEventHandler>>,
     use_gpu: bool,
 }
 
@@ -415,14 +415,14 @@ pub struct PhiEngine {
     pub model: Model,
     pub tokenizer: Tokenizer,
     pub device: Device,
-    pub event_handler: Option<Arc<BoxedPhiEventHandler>>,
+    pub event_handler: Option<Arc<dyn PhiEventHandler>>,
     pub context_window: u16,
 }
 
 impl PhiEngine {
     pub fn new(
         engine_options: EngineOptions,
-        event_handler: Option<Arc<BoxedPhiEventHandler>>,
+        event_handler: Option<Arc<dyn PhiEventHandler>>,
     ) -> Result<Self, PhiError> {
         let start = std::time::Instant::now();
         // this also requires building with features = ["metal"]
@@ -610,7 +610,6 @@ impl PhiEngine {
         debug!(" --> Loaded the model in {:?}", start.elapsed());
         if let Some(event_handler) = event_handler {
             event_handler
-                .handler
                 .on_model_loaded()
                 .map_err(|e| PhiError::InitalizationError {
                     error_text: e.to_string(),

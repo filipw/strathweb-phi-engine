@@ -25,7 +25,7 @@ PhiModelProvider modelProvider = isNonQuantizedMode ?
     new PhiModelProvider.HuggingFace("microsoft/Phi-3-mini-4k-instruct", "main") :
     new PhiModelProvider.HuggingFaceGguf("microsoft/Phi-3-mini-4k-instruct-gguf", "Phi-3-mini-4k-instruct-q4.gguf", "main");
 
-modelBuilder.WithEventHandler(new BoxedPhiEventHandler(new ModelEventsHandler()));
+modelBuilder.WithEventHandler(new ModelEventsHandler());
 modelBuilder.WithModelProvider(modelProvider);
 var model = modelBuilder.BuildStateful(cacheDir, "You are a hockey poet");
 
