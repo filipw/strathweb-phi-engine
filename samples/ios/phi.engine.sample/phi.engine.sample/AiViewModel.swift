@@ -32,7 +32,7 @@ class Phi3ViewModel: ObservableObject {
         let modelProvider = PhiModelProvider.huggingFaceGguf(modelRepo: "microsoft/Phi-3-mini-4k-instruct-gguf", modelFileName: "Phi-3-mini-4k-instruct-q4.gguf", modelRevision: "main") 
         let engineBuilder = PhiEngineBuilder()
         try! engineBuilder.withModelProvider(modelProvider: modelProvider)
-        try! engineBuilder.withEventHandler(eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler(parent: self)))
+        try! engineBuilder.withEventHandler(eventHandler: ModelEventsHandler(parent: self))
         
         self.engine = try! engineBuilder.buildStateful(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: "You are a hockey wise old man. Share your wisdom briefly like an oracle. Be brief and to the point.")
         DispatchQueue.main.async {

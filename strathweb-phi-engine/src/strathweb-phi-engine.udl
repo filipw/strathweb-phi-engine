@@ -144,8 +144,6 @@ interface PhiEventHandler {
     void on_inference_ended();
 };
 
-
-
 [Error]
 interface PhiError {
     InitalizationError(string error_text);

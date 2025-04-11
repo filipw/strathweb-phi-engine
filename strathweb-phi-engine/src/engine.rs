@@ -163,16 +163,6 @@ pub trait PhiEventHandler: Send + Sync {
     fn on_inference_token(&self, token: String) -> Result<(), PhiError>;
 }
 
-// pub struct BoxedPhiEventHandler {
-//     pub handler: Box<dyn PhiEventHandler>,
-// }
-
-// impl BoxedPhiEventHandler {
-//     pub fn new(handler: Arc<dyn PhiEventHandler>) -> Self {
-//         Self { handler }
-//     }
-// }
-
 pub struct PhiEngineBuilder {
     inner: Mutex<PhiEngineBuilderInner>,
 }

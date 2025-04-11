@@ -26,7 +26,7 @@ class ModelEventsHandler(PhiEventHandler):
 """)
 
 model_builder = PhiEngineBuilder()
-model_builder.with_event_handler(event_handler=BoxedPhiEventHandler(handler=ModelEventsHandler()))
+model_builder.with_event_handler(event_handler=ModelEventsHandler())
 gpu_enabled = model_builder.try_use_gpu()
 model = model_builder.build_stateful(cache_dir=cache_dir, system_instruction="You are a hockey poet")
 

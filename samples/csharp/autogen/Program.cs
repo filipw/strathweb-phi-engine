@@ -5,9 +5,8 @@ using Strathweb.Phi.Engine;
 
 var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), ".cache");
 
-var handler = new StreamingEventHandler();
 var modelBuilder = new PhiEngineBuilder();
-modelBuilder.WithEventHandler(new BoxedPhiEventHandler(handler));
+modelBuilder.WithEventHandler(new StreamingEventHandler());
 var model = modelBuilder.Build(cacheDir);
 
 var demo = AnsiConsole.Prompt(

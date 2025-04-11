@@ -5,9 +5,9 @@ using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
 var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), ".cache");
 
-var handler = new StreamingEventHandler();
+var handler = ;
 var modelBuilder = new PhiEngineBuilder();
-modelBuilder.WithEventHandler(new BoxedPhiEventHandler(handler));
+modelBuilder.WithEventHandler(new StreamingEventHandler());
 var model = modelBuilder.Build(cacheDir);
 
 var chatClient = model.AsChatClient("Local Phi-3 Demo", handler,

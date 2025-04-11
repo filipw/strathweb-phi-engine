@@ -65,7 +65,7 @@ class ModelEventsHandler: PhiEventHandler {
 }
 
 let modelBuilder = PhiEngineBuilder()
-try! modelBuilder.withEventHandler(eventHandler: BoxedPhiEventHandler(handler: ModelEventsHandler()))
+try! modelBuilder.withEventHandler(eventHandler: ModelEventsHandler())
 try! modelBuilder.withModelProvider(modelProvider: modelProvider)
 
 if isPhi4 {
