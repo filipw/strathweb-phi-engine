@@ -3,7 +3,6 @@ uniffi::include_scaffolding!("strathweb-phi-engine");
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 
-use crate::engine::BoxedPhiEventHandler;
 use crate::engine::ConversationContext;
 use crate::engine::ConversationMessage;
 use crate::engine::InferenceOptions;

@@ -5,7 +5,7 @@ use std::sync::Arc;
 use tokenizers::Tokenizer;
 use tracing::{debug, info};
 
-use crate::engine::{BoxedPhiEventHandler, InferenceOptions, InferenceResult, Model};
+use crate::engine::{InferenceOptions, InferenceResult, Model, PhiEventHandler};
 use crate::token_stream::TokenOutputStream;
 use crate::PhiError;
 
@@ -15,7 +15,7 @@ pub(crate) struct TextGenerator {
     tokenizer: Tokenizer,
     logits_processor: LogitsProcessor,
     inference_options: InferenceOptions,
-    event_handler: Option<Arc<BoxedPhiEventHandler>>,
+    event_handler: Option<Arc<dyn PhiEventHandler>>,
 }
 
 impl TextGenerator {
@@ -24,7 +24,7 @@ impl TextGenerator {
         tokenizer: Tokenizer,
         inference_options: &InferenceOptions,
         device: &Device,
-        event_handler: Option<Arc<BoxedPhiEventHandler>>,
+        event_handler: Option<Arc<dyn PhiEventHandler>>,
     ) -> Self {
         let logits_processor = {
             let temperature = inference_options.temperature;
@@ -61,7 +61,6 @@ impl TextGenerator {
     pub fn run(&mut self, prompt: &str, sample_len: u16) -> Result<InferenceResult> {
         if let Some(event_handler) = &self.event_handler {
             event_handler
-                .handler
                 .on_inference_started()
                 .map_err(|e| PhiError::InferenceError {
                     error_text: e.to_string(),
@@ -102,7 +101,7 @@ impl TextGenerator {
             all_tokens.push(next_token);
             if let Some(t) = tos.next_token(next_token)? {
                 if let Some(event_handler) = &self.event_handler {
-                    event_handler.handler.on_inference_token(t).map_err(|e| {
+                    event_handler.on_inference_token(t).map_err(|e| {
                         PhiError::InferenceError {
                             error_text: e.to_string(),
                         }
@@ -176,7 +175,7 @@ impl TextGenerator {
 
             if let Some(t) = tos.next_token(next_token)? {
                 if let Some(event_handler) = &self.event_handler {
-                    event_handler.handler.on_inference_token(t).map_err(|e| {
+                    event_handler.on_inference_token(t).map_err(|e| {
                         PhiError::InferenceError {
                             error_text: e.to_string(),
                         }
@@ -191,7 +190,6 @@ impl TextGenerator {
         if let Some(last_token) = tos.decode_rest()? {
             if let Some(event_handler) = &self.event_handler {
                 event_handler
-                    .handler
                     .on_inference_token(last_token)
                     .map_err(|e| PhiError::InferenceError {
                         error_text: e.to_string(),
@@ -201,7 +199,6 @@ impl TextGenerator {
 
         if let Some(event_handler) = &self.event_handler {
             event_handler
-                .handler
                 .on_inference_ended()
                 .map_err(|e| PhiError::InferenceError {
                     error_text: e.to_string(),

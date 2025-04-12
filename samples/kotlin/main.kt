@@ -1,7 +1,6 @@
 import strathweb.phi.engine.InferenceOptionsBuilder
 import strathweb.phi.engine.PhiEventHandler
 import strathweb.phi.engine.PhiEngineBuilder
-import strathweb.phi.engine.BoxedPhiEventHandler
 import strathweb.phi.engine.PhiModelProvider
 import java.io.File
 
@@ -53,7 +52,7 @@ fun main(args: Array<String>) {
     }
 
     val modelBuilder = PhiEngineBuilder()
-    modelBuilder.withEventHandler(BoxedPhiEventHandler(ModelEventsHandler()))
+    modelBuilder.withEventHandler(ModelEventsHandler())
     modelBuilder.withModelProvider(modelProvider)
     val model = modelBuilder.buildStateful(cacheDir, "You are a hockey poet")
 

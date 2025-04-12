@@ -8,7 +8,7 @@ crate-type = ["lib", "cdylib", "staticlib"]
 
 [dependencies]
 thiserror = "1.0"
-uniffi = { version = "0.25.0", features=["build"] }
+uniffi = { version = "0.28.3", features=["build"] }
 anyhow = "1.0.81"
 candle-nn = { version = "0.8.3" }
 candle-core = { version = "0.8.3" }
@@ -25,6 +25,6 @@ candle-core = { version = "0.8.3", features = ["metal"] }
 candle-transformers = { version = "0.8.3", features = ["metal"] }
 
 [build-dependencies]
-uniffi = { version = "0.25.0", features=["build"] }
-uniffi_build = "0.25.0"
-uniffi_bindgen = "0.25.0"
+uniffi = { version = "0.28.3", features=["build"] }
+uniffi_build = "0.28.3"
+uniffi_bindgen = "0.28.3"

@@ -87,7 +87,7 @@ interface PhiEngineBuilder {
     void with_flash_attention(boolean use_flash_attention);
 
     [Throws=PhiError]
-    void with_event_handler(BoxedPhiEventHandler event_handler);
+    void with_event_handler(PhiEventHandler event_handler);
 
     [Throws=PhiError]
     void with_model_provider(PhiModelProvider model_provider);
@@ -129,7 +129,8 @@ enum ChatFormat {
     "ChatML",
 };
 
-callback interface PhiEventHandler {
+[Trait, WithForeign]
+interface PhiEventHandler {
     [Throws=PhiError]
     void on_model_loaded();
 
@@ -141,10 +142,6 @@ callback interface PhiEventHandler {
 
     [Throws=PhiError]
     void on_inference_ended();
-};
-
-interface BoxedPhiEventHandler {
-    constructor(PhiEventHandler handler);
 };
 
 [Error]
