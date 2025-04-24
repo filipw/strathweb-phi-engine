@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-15, windows-latest]
+        os: [ubuntu-latest, macos-15, windows-latest, windows-11-arm]
 
     steps:
     - uses: actions/checkout@v3
@@ -88,11 +88,16 @@ jobs:
       with:
         name: native-library-macos-15
         path: artifacts/macos
-    - name: Download Windows artifacts
+    - name: Download Windows x64 artifacts
       uses: actions/download-artifact@v4
       with:
         name: native-library-windows-latest
         path: artifacts/windows
+    - name: Download Windows ARM artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: native-library-windows-11-arm
+        path: artifacts/windows-arm
     - name: Download bindings
       uses: actions/download-artifact@v4
       with:
@@ -103,9 +108,11 @@ jobs:
         mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/linux-x64/native
         mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/osx-arm64/native
         mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/win-x64/native
+        mkdir -p packages/csharp/Strathweb.Phi.Engine/runtimes/win-arm64/native
         cp artifacts/linux/*.so packages/csharp/Strathweb.Phi.Engine/runtimes/linux-x64/native/
         cp artifacts/macos/*.dylib packages/csharp/Strathweb.Phi.Engine/runtimes/osx-arm64/native/
         cp artifacts/windows/*.dll packages/csharp/Strathweb.Phi.Engine/runtimes/win-x64/native/
+        cp artifacts/windows-arm/*.dll packages/csharp/Strathweb.Phi.Engine/runtimes/win-arm64/native/
         cp artifacts/bindings/*.cs packages/csharp/Strathweb.Phi.Engine/
     - name: Build NuGet packages
       run: |
