@@ -1,4 +1,5 @@
 import Foundation
+import Strathweb_Phi_Engine
 
 let (isGgufMode, isPhi4, isCpuMode) = (
     CommandLine.arguments.contains("--gguf"),

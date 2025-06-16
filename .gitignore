@@ -417,6 +417,7 @@ packages/swift/Strathweb.Phi.Engine/.build
 packages/swift/Strathweb.Phi.Engine/Libs
 strathweb_phi_engine.swift
 packages/swift/Strathweb.Phi.Engine/.swiftpm/
-samples/ios/phi.engine.sample/phi.engine.sample.xcodeproj/xcuserdata/filipw.xcuserdatad/xcschemes/xcschememanagement.plist
+samples/ios/phi.engine.sample/phi.engine.sample.xcodeproj/xcuserdata/
 packages/csharp/.idea
 samples/csharp/chatclient/.idea
+samples/swift/sample-executable/.build/
