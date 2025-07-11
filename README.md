@@ -1,6 +1,6 @@
 # Strathweb Phi Engine
 
-A cross-platform library for running Microsoft's [Phi-3](https://azure.microsoft.com/en-us/blog/introducing-phi-3-redefining-whats-possible-with-slms/) locally using [candle](https://github.com/huggingface/candle) in GGUF and safe tensors format.
+A cross-platform library for running Microsoft's [Phi models](https://azure.microsoft.com/en-us/products/phi) locally using [candle](https://github.com/huggingface/candle) in GGUF and safe tensors format.
 
 ## Supported platforms
 
@@ -33,7 +33,7 @@ Now open `samples/io/phi.engine.sample/phi.engine.sample.xcodeproj` and build th
 Install UniFFI C# bindings generator
 
 ```shell
-cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
+cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.9.1+v0.28.3
 ```
 
 Build the Nuget package for your platform:
@@ -56,7 +56,7 @@ dotnet build packages/csharp -c Release
 dotnet pack packages/csharp -c Release -o artifacts/csharp
 ```
 
-Nuget package will be in `artifacts/csharp/Strathweb.Phi.Engine.0.1.0.nupkg`.
+Nuget package will be in `artifacts/csharp/Strathweb.Phi.Engine.x.x.x.nupkg`.
 (Optional) Run the sample console app:
 
 ```shell
