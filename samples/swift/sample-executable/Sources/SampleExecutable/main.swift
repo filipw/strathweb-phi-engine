@@ -16,7 +16,7 @@ let modelProvider = switch (isGgufMode, isPhi4) {
     case (true, true):
         PhiModelProvider.huggingFaceGguf(
             modelRepo: "microsoft/phi-4-gguf",
-            modelFileName: "phi-4-q4.gguf",
+            modelFileName: "phi-4-Q4_0.gguf",
             modelRevision: "main"
         )
     case (true, false):
@@ -27,12 +27,12 @@ let modelProvider = switch (isGgufMode, isPhi4) {
         )
     case (false, true):
         PhiModelProvider.huggingFace(
-            modelRepo: "microsoft/phi-4",
+            modelRepo: "microsoft/Phi-4-mini-instruct",
             modelRevision: "main"
         )
     case (false, false):
         PhiModelProvider.huggingFace(
-            modelRepo: "microsoft/Phi-3-mini-4k-instruct",
+            modelRepo: "microsoft/Phi-3.5-mini-instruct",
             modelRevision: "main"
         )
 }
