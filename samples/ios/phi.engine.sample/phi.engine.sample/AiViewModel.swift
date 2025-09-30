@@ -34,7 +34,7 @@ class Phi3ViewModel: ObservableObject {
         try! engineBuilder.withModelProvider(modelProvider: modelProvider)
         try! engineBuilder.withEventHandler(eventHandler: ModelEventsHandler(parent: self))
         
-        self.engine = try! engineBuilder.buildStateful(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: "You are a hockey wise old man. Share your wisdom briefly like an oracle. Be brief and to the point.")
+        self.engine = try! engineBuilder.buildStateful(cacheDir: FileManager.default.temporaryDirectory.path(), systemInstruction: "You are a hockey wise old man. Share your wisdom very briefly and answer very shortly. Speak like a zen master.")
         DispatchQueue.main.async {
             self.isLoadingEngine = false
             self.isReady = true

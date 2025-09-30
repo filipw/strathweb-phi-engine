@@ -421,3 +421,4 @@ samples/ios/phi.engine.sample/phi.engine.sample.xcodeproj/xcuserdata/
 packages/csharp/.idea
 samples/csharp/chatclient/.idea
 samples/swift/sample-executable/.build/
+.swiftpm/
