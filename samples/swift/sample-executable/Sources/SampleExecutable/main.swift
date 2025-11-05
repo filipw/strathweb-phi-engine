@@ -45,7 +45,7 @@ if isPhi4 {
 }
 let inferenceOptions = try! inferenceOptionsBuilder.build()
 
-let cacheDir = FileManager.default.currentDirectoryPath.appending("/.cache")
+let cacheDir = FileManager.default.currentDirectoryPath.appending("/../../../.cache")
 
 class ModelEventsHandler: PhiEventHandler {
     func onInferenceStarted() {

@@ -17,7 +17,7 @@ inferenceOptionsBuilder.WithTemperature(0.9);
 inferenceOptionsBuilder.WithTokenCount(100);
 var inferenceOptions = inferenceOptionsBuilder.Build();
 
-var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), ".cache");
+var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", ".cache");
 
 var modelBuilder = new PhiEngineBuilder();
 

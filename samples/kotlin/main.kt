@@ -30,7 +30,7 @@ fun main(args: Array<String>) {
     inferenceOptionsBuilder.withSeed(146628346.toULong())
     val inferenceOptions = inferenceOptionsBuilder.build()
 
-    val cacheDir = File(System.getProperty("user.dir"), ".cache").absolutePath
+    val cacheDir = File(File(File(File(System.getProperty("user.dir"), ".."), ".."), ".."), ".cache").absolutePath
 
     class ModelEventsHandler : PhiEventHandler {
         override fun onInferenceStarted() {}
