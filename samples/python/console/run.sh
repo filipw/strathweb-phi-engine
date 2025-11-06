@@ -14,4 +14,4 @@ else
 fi
 cp ../../../strathweb-phi-engine/bindings/strathweb_phi_engine.py .
 
-python main.py
+python3 main.py

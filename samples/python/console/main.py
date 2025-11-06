@@ -7,7 +7,7 @@ inference_options_builder.with_temperature(temperature=0.9)
 inference_options_builder.with_seed(seed=146628346)
 inference_options = inference_options_builder.build()
 
-cache_dir = os.path.join(os.getcwd(), ".cache")
+cache_dir = os.path.join(os.getcwd(), "..", "..", "..", ".cache")
 
 class ModelEventsHandler(PhiEventHandler):
     def on_inference_token(self, token: str):

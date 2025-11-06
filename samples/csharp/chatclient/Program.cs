@@ -3,7 +3,7 @@ using Strathweb.Phi.Engine.Microsoft.Extensions.AI;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
 using ChatRole = Microsoft.Extensions.AI.ChatRole;
 
-var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), ".cache");
+var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", ".cache");
 
 var handler = ;
 var modelBuilder = new PhiEngineBuilder();

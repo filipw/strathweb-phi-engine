@@ -3,7 +3,7 @@ using autogen.console;
 using Strathweb.Phi.Engine.AutoGen;
 using Strathweb.Phi.Engine;
 
-var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), ".cache");
+var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", ".cache");
 
 var modelBuilder = new PhiEngineBuilder();
 modelBuilder.WithEventHandler(new StreamingEventHandler());
