@@ -45,7 +45,7 @@ public class LocalPhiAgent : IAgent
         {
             TextMessage message => message.ToConversationMessage(),
             _ => throw new ArgumentException($"Invalid message type: {m.GetType()}")
-        }).ToList();
+        }).ToArray();
 
         var context = new ConversationContext(phiEngineMessages, _systemInstruction);
         return context;
