@@ -37,11 +37,11 @@ jobs:
 
     - name: Build .NET libraries on Linux and macOS
       if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-15'
-      run: build-donet.sh
+      run: ./build-dotnet.sh
 
     - name: Build .NET libraries on Windows
       if: matrix.os == 'windows-latest' || matrix.os == 'windows-11-arm'
-      run: build-donet.cmd
+      run: .\build-dotnet.cmd
         
     - name: Upload default artifacts
       if: github.event_name != 'pull_request'
