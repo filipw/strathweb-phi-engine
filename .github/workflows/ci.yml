@@ -27,16 +27,18 @@ jobs:
         ./rustup-init.exe -y
         $env:Path += ";$env:USERPROFILE\.cargo\bin"
         echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+   
     - name: Install uniffi-bindgen-cs
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'windows-latest' || matrix.os == 'windows-11-arm'
       run: cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.10.0+v0.29.4
+    
     - name: Build default target
       run: |
         cd strathweb-phi-engine
         cargo build --release 
 
-    - name: Build .NET libraries on Linux and macOS
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-15'
+    - name: Build .NET libraries on Linux
+      if: matrix.os == 'ubuntu-latest'
       run: ./build-dotnet.sh
 
     - name: Build .NET libraries on Windows
