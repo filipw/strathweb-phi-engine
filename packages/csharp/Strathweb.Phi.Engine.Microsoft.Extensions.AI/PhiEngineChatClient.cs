@@ -92,7 +92,7 @@ public class PhiEngineChatClient : IChatClient
         {
             var head = messages.Take(messages.Count - 1).ToList();
             var phiEngineMessages = head.Where(m => m.Role != ChatRole.System && m.Role != ChatRole.Tool)
-                .Select(m => m.ToConversationMessage()).ToList();
+                .Select(m => m.ToConversationMessage()).ToArray();
             var systemInstruction = head.LastOrDefault(m => m.Role == ChatRole.System)?.Text ?? _systemInstruction;
             return new ConversationContext(phiEngineMessages, systemInstruction);
         }
