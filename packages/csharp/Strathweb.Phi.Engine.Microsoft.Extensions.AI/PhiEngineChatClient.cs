@@ -24,27 +24,29 @@ public class PhiEngineChatClient : IChatClient
         _inferenceOptions = inferenceOptions ?? new InferenceOptionsBuilder().Build();
     }
 
-    public Task<ChatCompletion> CompleteAsync(IList<ChatMessage> chatMessages, ChatOptions options = null,
+    public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> chatMessages, ChatOptions options = null,
         CancellationToken cancellationToken = new())
     {
-        if (chatMessages == null || chatMessages.Count == 0) throw new ArgumentException("Messages cannot be empty");
+        var messagesList = chatMessages?.ToList();
+        if (messagesList == null || messagesList.Count == 0) throw new ArgumentException("Messages cannot be empty");
 
-        var prompt = GetCurrentPrompt(chatMessages);
-        var conversationContext = GetConversationContext(chatMessages);
+        var prompt = GetCurrentPrompt(messagesList);
+        var conversationContext = GetConversationContext(messagesList);
         var inferenceOptions = GetInferenceOptions(options);
 
         var response = _phiEngine.RunInference(prompt, conversationContext, inferenceOptions);
         var textMessage = new ChatMessage(ChatRole.Assistant, response.resultText);
-        return Task.FromResult(new ChatCompletion(new[] { textMessage }));
+        return Task.FromResult(new ChatResponse(new[] { textMessage }));
     }
 
-    public async IAsyncEnumerable<StreamingChatCompletionUpdate> CompleteStreamingAsync(IList<ChatMessage> chatMessages, ChatOptions options = null,
+    public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(IEnumerable<ChatMessage> chatMessages, ChatOptions options = null,
         [EnumeratorCancellation]CancellationToken cancellationToken = new())
     {
-        if (chatMessages == null || chatMessages.Count == 0) throw new ArgumentException("Messages cannot be empty");
+        var messagesList = chatMessages?.ToList();
+        if (messagesList == null || messagesList.Count == 0) throw new ArgumentException("Messages cannot be empty");
         
-        var prompt = GetCurrentPrompt(chatMessages);
-        var conversationContext = GetConversationContext(chatMessages);
+        var prompt = GetCurrentPrompt(messagesList);
+        var conversationContext = GetConversationContext(messagesList);
         var inferenceOptions = GetInferenceOptions(options);
 
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -65,11 +67,7 @@ public class PhiEngineChatClient : IChatClient
 
         await foreach (var token in _handler.GetInferenceTokensAsync().WithCancellation(cts.Token))
         {
-            yield return new StreamingChatCompletionUpdate
-            {
-                Role = ChatRole.Assistant,
-                Text = token
-            };
+            yield return new ChatResponseUpdate(ChatRole.Assistant, token);
         }
     }
     
