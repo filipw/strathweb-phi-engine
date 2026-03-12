@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="agent-framework/agentframework.console.csproj" />
+  <Project Path="autogen/autogen.console.csproj" />
+  <Project Path="chatclient/chatclient.console.csproj" />
+  <Project Path="console/console.csproj" />
+</Solution>

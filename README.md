@@ -105,6 +105,8 @@ Now open the Notebook and run the cells.
 
 ✅ Tested on macOS arm64.
 
+The NuGet package is built when running `./build-dotnet.sh` (`build-dotnet.bat` on Windows).
+
 ### Swift
 
 ✅ Tested on macOS arm64.
@@ -135,7 +137,10 @@ Currently the library supports Metal on MacOS. On other platforms only CPU is su
 
 The repository also contains a C# integration library for [AutoGen](https://github.com/microsoft/autogen/tree/dotnet/dotnet), called `Strathweb.Phi.Engine.AutoGen`. There is an example in the `samples/csharp/autogen` folder. It allows creating a local Phi-3 agent and integrating it into the other typical AutoGen workflows.
 
-The NuGet package is built when running `./build-dotnet.sh` (`build-dotnet.bat` on Windows).
+
+## Agent Framework
+
+The repository also features a C# integration library for [Microsoft Agent Framework](https://github.com/microsoft/agent-framework), called `Strathweb.Phi.Engine.AgentFramework`. You can explore an example in the `samples/csharp/agent-framework` folder. It enables wrapping your local Phi-3 engine inside an `AIAgent` directly, seamlessly joining agentic workflows with functions and capabilities.
 
 ## Blog posts
 
@@ -145,5 +150,5 @@ The NuGet package is built when running `./build-dotnet.sh` (`build-dotnet.bat` 
 
 📝 [AutoGen library](https://www.strathweb.com/2024/09/using-local-phi-3-models-in-autogen-with-strathweb-phi-engine/)
 
-📝 [.NET examples and Microso.Extensions.AI support](https://www.strathweb.com/2024/12/running-phi-inference-in-net-applications-with-strathweb-phi-engine/)
+📝 [.NET examples and Microsoft.Extensions.AI support](https://www.strathweb.com/2024/12/running-phi-inference-in-net-applications-with-strathweb-phi-engine/)
 
