@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Strathweb.Phi.Engine/Strathweb.Phi.Engine.csproj" />
+  <Project Path="Strathweb.Phi.Engine.AgentFramework/Strathweb.Phi.Engine.AgentFramework.csproj" />
+  <Project Path="Strathweb.Phi.Engine.AutoGen/Strathweb.Phi.Engine.AutoGen.csproj" />
+  <Project Path="Strathweb.Phi.Engine.Microsoft.Extensions.AI/Strathweb.Phi.Engine.Microsoft.Extensions.AI.csproj" />
+</Solution>
