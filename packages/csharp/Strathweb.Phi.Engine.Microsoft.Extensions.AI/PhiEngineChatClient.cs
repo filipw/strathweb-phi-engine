@@ -73,7 +73,32 @@ public class PhiEngineChatClient : IChatClient
     
     public object GetService(Type serviceType, object serviceKey = null)
     {
-        throw new NotSupportedException("No services can be retrieved");
+        if (serviceType is null)
+        {
+            throw new ArgumentNullException(nameof(serviceType));
+        }
+
+        if (serviceKey is not null)
+        {
+            return null;
+        }
+
+        if (serviceType == typeof(ChatClientMetadata))
+        {
+            return _metadata;
+        }
+
+        if (serviceType.IsInstanceOfType(_phiEngine))
+        {
+            return _phiEngine;
+        }
+
+        if (serviceType.IsInstanceOfType(this))
+        {
+            return this;
+        }
+
+        return null;
     }
 
     public ChatClientMetadata Metadata  => _metadata;
