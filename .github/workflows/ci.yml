@@ -136,13 +136,12 @@ jobs:
       run: |
         cd packages/csharp
         dotnet build Strathweb.Phi.Engine.slnx -c Release
-        dotnet pack Strathweb.Phi.Engine.slnx -c Release
+        dotnet pack Strathweb.Phi.Engine/Strathweb.Phi.Engine.csproj -c Release --no-build
+        dotnet pack Strathweb.Phi.Engine.AgentFramework/Strathweb.Phi.Engine.AgentFramework.csproj -c Release --no-build
+        dotnet pack Strathweb.Phi.Engine.AutoGen/Strathweb.Phi.Engine.AutoGen.csproj -c Release --no-build
+        dotnet pack Strathweb.Phi.Engine.Microsoft.Extensions.AI/Strathweb.Phi.Engine.Microsoft.Extensions.AI.csproj -c Release --no-build
         mkdir -p ../../artifacts/csharp
         cp */bin/Release/*.nupkg ../../artifacts/csharp/
-    - name: Build C# Samples
-      run: |
-        cd samples/csharp
-        dotnet build samples.slnx -c Release
     - name: Upload NuGet package (Strathweb.Phi.Engine)
       uses: actions/upload-artifact@v4
       with:
