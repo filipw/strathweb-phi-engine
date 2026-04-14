@@ -77,11 +77,12 @@ public partial class Examples
                                                               Could you tell me your name and location?
                                                               """, from: onboardingPersonalInformationAgent.Name);
 
-        var conversation = await onboardingPersonalInformationAgent.SendAsync(
+        var conversationAsync = onboardingPersonalInformationAgent.SendAsync(
                 receiver: user,
                 [greetingMessage],
-                maxRound: 2)
-            .ToListAsync();
+                maxRound: 2);
+        var conversation = new List<IMessage>();
+        await foreach(var msg in conversationAsync) conversation.Add(msg);
 
         var summarizePrompt = """
                               Return the customer information into as JSON object only: {'name': '', 'location': ''}
@@ -95,11 +96,12 @@ public partial class Examples
                                                                      Great! Could you tell me what topics you are interested in reading about?
                                                                      """, from: onboardingTopicPreferenceAgent.Name);
 
-        conversation = await onboardingTopicPreferenceAgent.SendAsync(
+        var conversationAsync2 = onboardingTopicPreferenceAgent.SendAsync(
                 receiver: user,
                 [topicPreferenceMessage],
-                maxRound: 1)
-            .ToListAsync();
+                maxRound: 1);
+        conversation = new List<IMessage>();
+        await foreach(var msg in conversationAsync2) conversation.Add(msg);
 
         // Keep summarizing
         summary = await summarizer.SendAsync("summarize the conversation to this point", chatHistory: conversation);
@@ -110,13 +112,14 @@ public partial class Examples
                                                         Let's find something fun to read.
                                                         """, from: user.Name);
 
-        conversation = await user.SendAsync(
+        var conversationAsync3 = user.SendAsync(
                 receiver: customerEngagementAgent,
                 chatHistory: conversation.Concat([
                     funFactMessage
                 ]), // this time, we keep the previous conversation history
-                maxRound: 1)
-            .ToListAsync();
+                maxRound: 1);
+        conversation = new List<IMessage>();
+        await foreach(var msg in conversationAsync3) conversation.Add(msg);
 
         // Keep summarizing
         summary = await summarizer.SendAsync("summarize the conversation to this point", chatHistory: new[] { summary }.Concat(conversation));

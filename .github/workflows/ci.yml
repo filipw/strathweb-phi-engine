@@ -135,13 +135,24 @@ jobs:
     - name: Build NuGet packages
       run: |
         cd packages/csharp
-        dotnet build -c Release
-        dotnet pack -c Release
+        dotnet build Strathweb.Phi.Engine.slnx -c Release
+        dotnet pack Strathweb.Phi.Engine.slnx -c Release
+        mkdir -p ../../artifacts/csharp
+        cp */bin/Release/*.nupkg ../../artifacts/csharp/
+    - name: Build C# Samples
+      run: |
+        cd samples/csharp
+        dotnet build samples.slnx -c Release
     - name: Upload NuGet package (Strathweb.Phi.Engine)
       uses: actions/upload-artifact@v4
       with:
         name: Strathweb.Phi.Engine
         path: packages/csharp/Strathweb.Phi.Engine/bin/Release/*.nupkg
+    - name: Upload NuGet package (Strathweb.Phi.Engine.AgentFramework)
+      uses: actions/upload-artifact@v4
+      with:
+        name: Strathweb.Phi.Engine.AgentFramework
+        path: packages/csharp/Strathweb.Phi.Engine.AgentFramework/bin/Release/*.nupkg
     - name: Upload NuGet package (Strathweb.Phi.Engine.AutoGen)
       uses: actions/upload-artifact@v4
       with:
