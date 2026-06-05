@@ -7,14 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-      <!-- note: this is intentionally referencing the library via the nuget package: to test it, and to take advantage of the native assets there -->
-      <PackageReference Include="Strathweb.Phi.Engine.AutoGen" Version="0.2.0" />
-      <PackageReference Include="FluentAssertions" Version="6.12.0" />
-      <PackageReference Include="spectre.console" Version="0.47.0" />
-  </ItemGroup>
-
-  <!-- only use the below if you know what you are doing (e.g. the native assets have to provided by hand or by extra copy task) -->
-  <!--<ItemGroup>
     <ProjectReference Include="..\..\..\packages\csharp\Strathweb.Phi.Engine.AutoGen\Strathweb.Phi.Engine.AutoGen.csproj" />
-  </ItemGroup>-->
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+    <PackageReference Include="spectre.console" Version="0.47.0" />
+  </ItemGroup>
 </Project>

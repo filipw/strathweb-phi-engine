@@ -1,6 +1,14 @@
 <Solution>
-  <Project Path="Strathweb.Phi.Engine/Strathweb.Phi.Engine.csproj" />
-  <Project Path="Strathweb.Phi.Engine.AgentFramework/Strathweb.Phi.Engine.AgentFramework.csproj" />
-  <Project Path="Strathweb.Phi.Engine.AutoGen/Strathweb.Phi.Engine.AutoGen.csproj" />
-  <Project Path="Strathweb.Phi.Engine.Microsoft.Extensions.AI/Strathweb.Phi.Engine.Microsoft.Extensions.AI.csproj" />
+  <Folder Name="/packages/">
+    <Project Path="Strathweb.Phi.Engine/Strathweb.Phi.Engine.csproj" />
+    <Project Path="Strathweb.Phi.Engine.AgentFramework/Strathweb.Phi.Engine.AgentFramework.csproj" />
+    <Project Path="Strathweb.Phi.Engine.AutoGen/Strathweb.Phi.Engine.AutoGen.csproj" />
+    <Project Path="Strathweb.Phi.Engine.Microsoft.Extensions.AI/Strathweb.Phi.Engine.Microsoft.Extensions.AI.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="../../samples/csharp/agent-framework/agentframework.console.csproj" />
+    <Project Path="../../samples/csharp/autogen/autogen.console.csproj" />
+    <Project Path="../../samples/csharp/chatclient/chatclient.console.csproj" />
+    <Project Path="../../samples/csharp/console/console.csproj" />
+  </Folder>
 </Solution>

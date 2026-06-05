@@ -38,6 +38,27 @@
     <Copy SourceFiles="@(NativeLibraries)" DestinationFolder="$(DestinationFolder)" SkipUnchangedFiles="true" />
   </Target>
 
+  <Target Name="AddNativeLibsToContentWithTargetPath" BeforeTargets="GetCopyToOutputDirectoryItems">
+    <ItemGroup>
+      <ContentWithTargetPath Condition="$([MSBuild]::IsOsPlatform('MacOS')) and Exists('$(MSBuildProjectDirectory)/runtimes/osx-arm64/native/libstrathweb_phi_engine.dylib')"
+                             Include="$(MSBuildProjectDirectory)/runtimes/osx-arm64/native/libstrathweb_phi_engine.dylib"
+                             TargetPath="libstrathweb_phi_engine.dylib"
+                             CopyToOutputDirectory="PreserveNewest" />
+      <ContentWithTargetPath Condition="$([MSBuild]::IsOsPlatform('Linux')) and Exists('$(MSBuildProjectDirectory)/runtimes/linux-x64/native/libstrathweb_phi_engine.so')"
+                             Include="$(MSBuildProjectDirectory)/runtimes/linux-x64/native/libstrathweb_phi_engine.so"
+                             TargetPath="libstrathweb_phi_engine.so"
+                             CopyToOutputDirectory="PreserveNewest" />
+      <ContentWithTargetPath Condition="$([MSBuild]::IsOsPlatform('Windows')) and Exists('$(MSBuildProjectDirectory)/runtimes/win-x64/native/strathweb_phi_engine.dll')"
+                             Include="$(MSBuildProjectDirectory)/runtimes/win-x64/native/strathweb_phi_engine.dll"
+                             TargetPath="strathweb_phi_engine.dll"
+                             CopyToOutputDirectory="PreserveNewest" />
+      <ContentWithTargetPath Condition="$([MSBuild]::IsOsPlatform('Windows')) and Exists('$(MSBuildProjectDirectory)/runtimes/win-arm64/native/strathweb_phi_engine.dll')"
+                             Include="$(MSBuildProjectDirectory)/runtimes/win-arm64/native/strathweb_phi_engine.dll"
+                             TargetPath="strathweb_phi_engine.dll"
+                             CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
     <None Condition="Exists('runtimes/linux-x64/native/libstrathweb_phi_engine.so')" Include="runtimes/linux-x64/native/libstrathweb_phi_engine.so" Pack="true" PackagePath="runtimes/linux-x64/native" />
     <None Condition="Exists('runtimes/osx-arm64/native/libstrathweb_phi_engine.dylib')" Include="runtimes/osx-arm64/native/libstrathweb_phi_engine.dylib" Pack="true" PackagePath="runtimes/osx-arm64/native" />
